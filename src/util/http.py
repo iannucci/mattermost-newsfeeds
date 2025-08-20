@@ -6,7 +6,8 @@ def http_get(url, headers=None, params=None, timeout: int = DEFAULT_TIMEOUT):
     backoff = [0, 1.0, 2.0]
     last_exc = None
     for delay in backoff:
-        if delay: time.sleep(delay)
+        if delay: 
+            time.sleep(delay)
         try:
             r = requests.get(url, headers=headers, params=params, timeout=timeout)
             r.raise_for_status()
@@ -34,7 +35,8 @@ def post_multipart(url, files, data=None, headers=None, timeout: int = DEFAULT_T
     backoff = [0, 1.0, 2.5]
     last_exc = None
     for delay in backoff:
-        if delay: time.sleep(delay)
+        if delay: 
+            time.sleep(delay)
         try:
             r = requests.post(url, files=files, data=data or {}, headers=headers or {}, timeout=timeout)
             r.raise_for_status()

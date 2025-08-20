@@ -13,13 +13,31 @@ def km_between(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 class SourceBase:
     bucket="generic"
     def __init__(self, name: str, cfg: Dict[str, Any], general: Dict[str, Any], seen, logger, notifier: Notifier):
-        self.name=name; self.cfg=cfg; self.params=cfg.get("params",{}); self.template=cfg.get("template")
-        self.general=general; self.seen=seen; self.logger=logger; self.notifier=notifier
-        self.next_due=0.0; self.poll_seconds=max(30,int(cfg.get("poll_seconds",300)))
-    def due(self)->bool: return time.time()>=self.next_due
-    def schedule_next(self): self.next_due=time.time()+self.poll_seconds
+        self.name=name
+        self.cfg=cfg
+        self.params=cfg.get("params",{})
+        self.template=cfg.get("template")
+        self.general=general
+        self.seen=seen
+        self.logger=logger
+        self.notifier=notifier
+        self.next_due=0.0
+        self.poll_seconds=max(30,int(cfg.get("poll_seconds",300)))
+
+    def due(self)->bool: 
+        return time.time()>=self.next_due
+
+    def schedule_next(self): 
+        self.next_due=time.time()+self.poll_seconds
+
     def fingerprints(self, item: Dict[str, Any])->List[str]:
         fid=item.get("id"); return [f"{self.bucket}|{fid}"] if fid else []
-    def post(self, payload: Dict[str, Any]): self.notifier.send(f"{self.name} — {payload.get('count',0)} new", payload, override=self.cfg.get('notifier'), template=self.template)
-    def post_item(self, item: Dict[str, Any]): self.notifier.send(self.name, {"items":[item]}, override=self.cfg.get('notifier'), template=self.template)
-    def poll(self, now_ts: float)->int: raise NotImplementedError
+
+    def post(self, payload: Dict[str, Any]): 
+        self.notifier.send(f"{self.name} — {payload.get('count',0)} new", payload, override=self.cfg.get('notifier'), template=self.template)
+
+    def post_item(self, item: Dict[str, Any]): 
+        self.notifier.send(self.name, {"items":[item]}, override=self.cfg.get('notifier'), template=self.template)
+
+    def poll(self, now_ts: float)->int: 
+        raise NotImplementedError

@@ -47,11 +47,14 @@ class Notifier:
         if self._cached_channel_id: return self._cached_channel_id
         if self.channel_id: self._cached_channel_id=self.channel_id; return self.channel_id
         if not (self.host and self.token and self.team and self.channel): return None
-        base=self._base(); headers={"Authorization": f"Bearer {self.token}", "Accept": "application/json"}
+        base=self._base()
+        headers={"Authorization": f"Bearer {self.token}", "Accept": "application/json"}
         t=http_get(f"{base}/api/v4/teams/name/{self.team}", headers=headers).json(); team_id=t.get('id')
-        if not team_id: return None
+        if not team_id: 
+            return None
         c=http_get(f"{base}/api/v4/teams/{team_id}/channels/name/{self.channel}", headers=headers).json(); chan_id=c.get('id')
-        if chan_id: self._cached_channel_id=chan_id
+        if chan_id: 
+            self._cached_channel_id=chan_id
         return chan_id
 
     def _compose_text(self, title: str, items: List[Dict[str, Any]], template: Optional[str]):
@@ -67,13 +70,16 @@ class Notifier:
     def send(self, title: str, payload: Dict[str, Any], override: Optional[Dict[str, Any]] = None, template: Optional[str] = None):
         ocfg = override or {}
         t=(ocfg.get('type') or self.type).lower()
-        if t=='bot': return self._send_bot(title, payload, ocfg, template)
-        else: return self._send_webhook(title, payload, ocfg, template)
+        if t=='bot': 
+            return self._send_bot(title, payload, ocfg, template)
+        else: 
+            return self._send_webhook(title, payload, ocfg, template)
 
     # ---------- Webhook ----------
     def _send_webhook(self, title: str, payload: Dict[str, Any], ocfg: Dict[str, Any], template: Optional[str]):
         webhook_url=ocfg.get('webhook_url') or self.webhook_url
-        if not webhook_url: return None
+        if not webhook_url: 
+            return None
         items=payload.get('items',[])
         text=self._compose_text(title, items, template)
         return post_json(webhook_url, {"text": text})
@@ -87,7 +93,8 @@ class Notifier:
         chan_id=ocfg.get('channel_id') or self._cached_channel_id
         if not chan_id:
             self.scheme, self.host, self.port, self.token = scheme, host, port, token
-            self.team = ocfg.get('team', self.team); self.channel = ocfg.get('channel', self.channel)
+            self.team = ocfg.get('team', self.team)
+            self.channel = ocfg.get('channel', self.channel)
             chan_id=self._resolve_channel_id()
             if not chan_id: return None
 
@@ -105,15 +112,18 @@ class Notifier:
             upload_headers={"Authorization": f"Bearer {token}"}
             upload=post_multipart(f"{base}/api/v4/files", files=finfo, data={"channel_id": chan_id}, headers=upload_headers)
             file_id=upload.json().get('file_infos',[{}])[0].get('id')
-            if not file_id: return None
+            if not file_id: 
+                return None
             body={"channel_id": chan_id, "message": f"{title}", "file_ids": [file_id]}
             root_id = ocfg.get('thread_root_id') or self.thread_root_id
-            if root_id: body["root_id"] = root_id
+            if root_id: 
+                body["root_id"] = root_id
             return post_json(url, body, headers=headers)
 
         # otherwise, plain text message
         text=self._compose_text(title, items, template)
         body={"channel_id": chan_id, "message": text}
         root_id = ocfg.get('thread_root_id') or self.thread_root_id
-        if root_id: body["root_id"] = root_id
+        if root_id: 
+            body["root_id"] = root_id
         return post_json(url, body, headers=headers)
