@@ -1,0 +1,18 @@
+[Unit]
+Description=mattermost_newsfeeds Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/opt/mattermost_newsfeeds/.venv/bin/python /opt/mattermost_newsfeeds/src/main.py
+WorkingDirectory=/opt/mattermost_newsfeeds
+Restart=on-failure
+RestartSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

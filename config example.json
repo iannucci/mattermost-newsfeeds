@@ -1,0 +1,106 @@
+{
+  "general": {
+    "program_name": "mattermost_newsfeeds",
+    "user_agent": "mattermost_newsfeeds/3.0 (mailto:you@example.com)",
+    "dry_run": false,
+    "seen_store_path": "state/seen.json",
+    "seen_ttl_days": 7,
+    "location": {
+      "lat": 37.0,
+      "lon": -122.0
+    },
+    "log_level": "INFO",
+    "sleep_min": 1,
+    "sleep_max": 5,
+    "notifier": {
+      "type": "bot",
+      "stream": true,
+      "style": "markdown",
+      "thread_root_id": "",
+      "batch_threshold": 10,
+      "webhook_url": "",
+      "scheme": "http",
+      "host": "mattermost.server.dns.name",
+      "port": 80,
+      "token": "MM-REPLACE-ME",
+      "channel_id": "channel-id looks like 4x4bt1if3dvjpbfwubf6sfeacg",
+      "team": "Text name of team",
+      "channel": "Text name of channel"
+    }
+  },
+  "sources": [
+    {
+      "name": "NWS",
+      "enabled": true,
+      "module": "sources.nws",
+      "class": "NWS",
+      "poll_seconds": 300,
+      "params": {
+        "api_url": "https://api.weather.gov/alerts/active"
+      },
+      "template": "**[{event}]** {headline}\n_effective:_ {effective}  _expires:_ {expires}",
+      "notifier": {
+        "style": "fields"
+      }
+    },
+    {
+      "name": "USGS",
+      "enabled": true,
+      "module": "sources.usgs",
+      "class": "USGS",
+      "poll_seconds": 300,
+      "params": {
+        "feed_url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",
+        "max_km": 150.0
+      },
+      "template": "**Earthquake M{mag}** \u2014 {place}  ({distance_km_from_origin} km)\n{url}"
+    },
+    {
+      "name": "Caltrans",
+      "enabled": true,
+      "module": "sources.caltrans",
+      "class": "Caltrans",
+      "poll_seconds": 300,
+      "params": {
+        "max_km": 80.0,
+        "endpoints": {
+          "lane_closures": "https://quickmap.dot.ca.gov/data/lcs2way.kml",
+          "chp_incidents": "https://quickmap.dot.ca.gov/data/chp-only.kml",
+          "message_signs": "https://quickmap.dot.ca.gov/data/cms.kml",
+          "waze_road_closed": "https://quickmap.dot.ca.gov/data/waze_road_closed.kml"
+        },
+        "layer_filter_prefix": ""
+      },
+      "template": "**Caltrans {layer}** \u2014 {name}  ({distance_km} km)\n",
+      "notifier": {
+        "style": "upload",
+        "batch_threshold": 5
+      }
+    },
+    {
+      "name": "PAO",
+      "enabled": true,
+      "module": "sources.pao",
+      "class": "PAO",
+      "poll_seconds": 600,
+      "params": {
+        "news_url": "https://www.paloaltoonline.com/news/",
+        "max_items": 15
+      },
+      "template": "**PAO** \u2014 {title}\n{link}"
+    },
+    {
+      "name": "PulsePoint",
+      "enabled": true,
+      "module": "sources.pulsepoint",
+      "class": "PulsePoint",
+      "poll_seconds": 3600,
+      "params": {
+        "agency_id": "",
+        "respond_url": "https://web.pulsepoint.org/?agencies=",
+        "broadcastify": "https://www.broadcastify.com/listen/feed/34259"
+      },
+      "template": "**PulsePoint** \u2014 Palo Alto FD\nRespond: {respond_url}\nRadio: {broadcastify}"
+    }
+  ]
+}
