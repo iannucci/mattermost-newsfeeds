@@ -71,7 +71,7 @@
         },
         "layer_filter_prefix": ""
       },
-      "template": "**[CalTrans]** \u2014 {name}  ({distance_km} km)\n{desc",
+      "template": "**[CalTrans]** \u2014 {name}  ({distance_km} km)\n{desc}",
       "notifier": {
         "style": "upload",
         "batch_threshold": 5
