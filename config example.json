@@ -38,7 +38,7 @@
       "params": {
         "api_url": "https://api.weather.gov/alerts/active"
       },
-      "template": "**[{event}]** {headline}\n_effective:_ {effective}  _expires:_ {expires}",
+      "template": "**[NWS] {event}** \u2014 {headline}\n_effective:_ {effective}  _expires:_ {expires}",
       "notifier": {
         "style": "fields"
       }
@@ -53,7 +53,7 @@
         "feed_url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",
         "max_km": 150.0
       },
-      "template": "**Earthquake M{mag}** \u2014 {place}  ({distance_km_from_origin} km)\n{url}"
+      "template": "**[USGS] Earthquake M{mag}** \u2014 {place}  ({distance_km_from_origin} km)\n{url}"
     },
     {
       "name": "Caltrans",
@@ -71,7 +71,7 @@
         },
         "layer_filter_prefix": ""
       },
-      "template": "**Caltrans {layer}** \u2014 {name}  ({distance_km} km)\n",
+      "template": "**[CalTrans]** \u2014 {name}  ({distance_km} km)\n{desc",
       "notifier": {
         "style": "upload",
         "batch_threshold": 5
@@ -87,7 +87,7 @@
         "news_url": "https://www.paloaltoonline.com/news/",
         "max_items": 15
       },
-      "template": "**PAO** \u2014 {title}\n{link}"
+      "template": "**[PAO]** \u2014 {title}\n{link}"
     },
     {
       "name": "PulsePoint",
@@ -97,7 +97,7 @@
       "poll_seconds": 3600,
       "params": {
         "agency_id": "",
-        "respond_url": "https://web.pulsepoint.org/?agencies=",
+        "respond_url": "https://web.pulsepoint.org/?agencies=00000",
         "broadcastify": "https://www.broadcastify.com/listen/feed/34259"
       },
       "template": "**PulsePoint** \u2014 Palo Alto FD\nRespond: {respond_url}\nRadio: {broadcastify}"

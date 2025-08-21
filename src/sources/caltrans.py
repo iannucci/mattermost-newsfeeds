@@ -45,10 +45,9 @@ class Caltrans(SourceBase):
                     if self.seen.is_seen(self.bucket, fp): 
                         continue
                     self.seen.mark_seen(self.bucket, fp)
-                    # self.logger.info(f"[CalTrans] {layer} item: {item}")
                     soup=BeautifulSoup(item['description'], 'html.parser')
                     if soup and isinstance(soup, Tag):
-                        item['desc']=soup.get_text(separator=' ', strip=True)
+                        item['desc']=soup.get_text(separator=' ', strip=True).replace("Information courtesy of", "").strip()
                     else:
                         item['desc']=unescape(item.get('description', ''))
                     self.logger.info(f"[CalTrans] {layer} item description: {item['desc']}")
