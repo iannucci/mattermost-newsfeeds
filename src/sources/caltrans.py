@@ -37,12 +37,7 @@ class Caltrans(SourceBase):
                         # self.logger.debug(f"[CalTrans] skipping item {it} due to distance {d} km > max {max_km} km")
                         continue
 
-                    self.logger.debug(f"[CalTrans] {layer} item: {it}")
                     it['layer']=layer
-                    # extracted_text = self._extract_cms_text(xml_text)
-                    # if extracted_text:
-                    #     self.logger.debug(f"Extracted text: {extracted_text}")
-
                     item=dict(it)
                     item['distance_km']=round(d,1)
                     item['layer']=layer
@@ -50,11 +45,19 @@ class Caltrans(SourceBase):
                     if self.seen.is_seen(self.bucket, fp): 
                         continue
                     self.seen.mark_seen(self.bucket, fp)
-                    self.post_item(item); new_count+=1
+                    # self.logger.info(f"[CalTrans] {layer} item: {item}")
+                    soup=BeautifulSoup(item['description'], 'html.parser')
+                    if soup and isinstance(soup, Tag):
+                        item['desc']=soup.get_text(separator=' ', strip=True)
+                    else:
+                        item['desc']=unescape(item.get('description', ''))
+                    self.logger.info(f"[CalTrans] {layer} item description: {item['desc']}")
+                    self.post_item(item)
+                    new_count+=1
             except Exception as e:
                 self.logger.error(f"[CalTrans] {layer} error: {e}")
         if new_count: 
-            self.logger.info(f"[CalTrans] {new_count} new items")
+            self.logger.info(f"[CalTrans] {new_count} new item(s)")
         else: 
             self.logger.debug("[CalTrans] no new items")
         return new_count

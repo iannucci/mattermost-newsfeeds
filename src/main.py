@@ -61,7 +61,7 @@ def main():
     cfg_path=find_config_path(args.config)
     with open(cfg_path,'r',encoding='utf-8') as f: 
         cfg=json.load(f)
-    logger=build_logger(cfg['general'].get('log_level','INFO'))
+    logger=build_logger(cfg['general'].get('log_level','DEBUG'))
     scheduler_loop(cfg, logger)
 
 if __name__=='__main__':
