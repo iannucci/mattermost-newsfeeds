@@ -4,7 +4,7 @@ Pulls information from information sources and formats them as messages that are
 
 Config lookup:
 - prefers `./config.json` (current working directory)
-- else `/etc/mattermost_newsfeeds/config.json`
+- else `/etc/mattermost-newsfeeds/config.json`
 
 ## Installation
 

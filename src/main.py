@@ -2,12 +2,12 @@ import argparse, importlib, json, logging, os, time
 from util.seen_store import SeenStore
 from util.notifier import Notifier
 
-DEFAULT_CFG = "/etc/mattermost_newsfeeds/config.json"
+DEFAULT_CFG = "/etc/mattermost-newsfeeds/config.json"
 
 def build_logger(level: str):
     lvl=getattr(logging, level.upper(), logging.DEBUG)
     logging.basicConfig(level=lvl, format='%(asctime)s %(levelname)s %(message)s')
-    return logging.getLogger('mattermost_newsfeeds')
+    return logging.getLogger('mattermost-newsfeeds')
 
 def load_sources(cfg, logger, seen, notifier):
     general=cfg['general']
@@ -55,7 +55,7 @@ def scheduler_loop(cfg, logger):
         seen.purge_old()
 
 def main():
-    ap=argparse.ArgumentParser(description='mattermost_newsfeeds')
+    ap=argparse.ArgumentParser(description='mattermost-newsfeeds')
     ap.add_argument('--config', default=DEFAULT_CFG, help=f"Path to config file (default: {DEFAULT_CFG})")
     args=ap.parse_args()
     cfg_path=find_config_path(args.config)

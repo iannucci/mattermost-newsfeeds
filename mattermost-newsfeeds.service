@@ -1,12 +1,12 @@
 [Unit]
-Description=mattermost_newsfeeds Service
+Description=mattermost-newsfeeds Service
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/opt/mattermost_newsfeeds/.venv/bin/python /opt/mattermost_newsfeeds/src/main.py
-WorkingDirectory=/opt/mattermost_newsfeeds
+ExecStart=/opt/mattermost-newsfeeds/.venv/bin/python /opt/mattermost-newsfeeds/src/main.py
+WorkingDirectory=/opt/mattermost-newsfeeds
 Restart=on-failure
 RestartSec=10
 NoNewPrivileges=true

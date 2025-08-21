@@ -1,7 +1,7 @@
 {
   "general": {
-    "program_name": "mattermost_newsfeeds",
-    "user_agent": "mattermost_newsfeeds/3.0 (mailto:you@example.com)",
+    "program_name": "mattermost-newsfeeds",
+    "user_agent": "mattermost-newsfeeds/3.0 (mailto:you@example.com)",
     "dry_run": false,
     "seen_store_path": "state/seen.json",
     "seen_ttl_days": 7,
