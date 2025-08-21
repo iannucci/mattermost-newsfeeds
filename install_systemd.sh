@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-NAME="mattermost_newsfeeds"
+NAME="mattermost-newsfeeds"
 APP_DIR="/opt/$NAME"
 UNIT_FILE="/etc/systemd/system/$NAME.service"
 ETC_DIR="/etc/$NAME"
@@ -15,7 +15,7 @@ echo ">>> Copying project files"
 sudo cp -r src "$APP_DIR/"
 sudo cp requirements.txt "$APP_DIR/"
 sudo cp README.md "$APP_DIR/"
-sudo cp mattermost_newsfeeds.service "$APP_DIR/"
+sudo cp mattermost-newsfeeds.service "$APP_DIR/"
 # Provide a config at /etc if one doesn't exist yet
 if [ ! -f "$CFG_ETC" ]; then
   echo ">>> Installing default config to $CFG_ETC"
@@ -28,7 +28,7 @@ sudo bash -lc "$APP_DIR/.venv/bin/pip install --upgrade pip"
 sudo bash -lc "$APP_DIR/.venv/bin/pip install -r $APP_DIR/requirements.txt"
 
 echo '>>> Installing systemd unit'
-sudo cp "$APP_DIR/mattermost_newsfeeds.service" "$UNIT_FILE"
+sudo cp "$APP_DIR/mattermost-newsfeeds.service" "$UNIT_FILE"
 sudo systemctl daemon-reload
 sudo systemctl enable "$NAME"
 sudo systemctl restart "$NAME"
