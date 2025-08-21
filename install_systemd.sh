@@ -19,7 +19,7 @@ sudo cp mattermost_newsfeeds.service "$APP_DIR/"
 # Provide a config at /etc if one doesn't exist yet
 if [ ! -f "$CFG_ETC" ]; then
   echo ">>> Installing default config to $CFG_ETC"
-  sudo cp config.json "$CFG_ETC"
+  sudo cp config-example.json "$CFG_ETC"
 fi
 
 echo ">>> Creating venv and installing requirements"
