@@ -100,7 +100,31 @@
         "respond_url": "https://web.pulsepoint.org/?agencies=00000",
         "broadcastify": "https://www.broadcastify.com/listen/feed/34259"
       },
-      "template": "**PulsePoint** \u2014 Palo Alto FD\nRespond: {respond_url}\nRadio: {broadcastify}"
+      "template": "**[PulsePoint]** \u2014 Palo Alto FD\nRespond: {respond_url}\nRadio: {broadcastify}"
+    },
+    {
+      "name": "AmbientWeather",
+      "enabled": true,
+      "module": "sources.ambient_weather",
+      "class": "AmbientWeather",
+      "poll_seconds": 10,
+      "mode": "http",
+      "params": {
+        "http": {
+          "host": "0.0.0.0",
+          "port": 46000,
+          "pretty": true,
+          "verbose": false,
+          "dump_on_empty": false
+        },
+        "udp": {
+          "iface": "en0",
+          "port": 59387,
+          "pretty": true,
+          "dump_on_empty": true
+        }
+      },
+      "template": "**[AmbientWeather]** \u2014 Local conditions:\n  Temp {temperature_F}\u00b0F\n  Winds from the {wind_dir} at {wind_mph} mph, gusting to {wind_gust_mph} mph\n  Humidity {humidity_pct}%\n  Pressure {pressure_in_h2o}\n  Rain rate {rain_rate_in_hr} in/h, daily {rain_daily_in} in"
     }
   ]
 }

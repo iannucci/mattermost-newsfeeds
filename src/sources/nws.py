@@ -20,7 +20,8 @@ class NWS(SourceBase):
             if self.seen.is_seen(self.bucket, fp): 
                 continue
             self.seen.mark_seen(self.bucket, fp)
-            self.post_item(item); new_count+=1
+            self.post_item(item)
+            new_count+=1
         if new_count: 
             self.logger.info(f"[NWS] {new_count} new alerts")
         else: 
