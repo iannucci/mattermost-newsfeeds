@@ -2,8 +2,8 @@
 from typing import Dict, Any
 import json, sys
 
-from .ws5000_handler import Handler
-from .ws5000_decode import WS5000Decoder
+from util.ws5000_handler import Handler
+from util.ws5000_decode import WS5000Decoder
 from .base import SourceBase
 from util.notifier import Notifier
 
@@ -12,7 +12,7 @@ class AmbientWeather(SourceBase):
         super().__init__(name, cfg, general, seen, logger, notifier)
         self.handler = Handler(self.cfg)
         self.handler.start()
-        self.decoder = WS5000Decoder()
+        self.decoder = WS5000Decoder(self.params)
 
     def _pretty(self) -> bool:
         mode = str(self.cfg.get('mode', 'http')).lower()
@@ -20,30 +20,34 @@ class AmbientWeather(SourceBase):
         return bool(section.get('pretty', False))
 
     def poll(self, now_ts: float) -> int:
-        """Drain queued messages, decode to dicts, and print JSON (one line per record).
+        """Drain queued messages.  For the most recent, decode to dict
         Returns the number of messages processed.
         """
         processed = 0
         pretty = self._pretty()
+        last_msg = None
         while True:
             msg = self.handler.poll()
             if not msg:
                 break
-            if msg.get('type') == 'http':
-                fields = msg.get('fields', {})
-                rec = self.decoder.normalize_fields(fields)
-                # rec['_transport'] = msg.get('transport', {})
-                # print(json.dumps(rec, indent=2 if pretty else None, ensure_ascii=False))
+            else:
+                last_msg = msg
+                processed += 1
+        if last_msg:
+            if last_msg.get('type') == 'http':
+                fields = last_msg.get('fields', {})
+                item = self.decoder.normalize_fields(fields)
+                # item['_transport'] = last_msg.get('transport', {})
+                # print(json.dumps(item, indent=2 if pretty else None, ensure_ascii=False))
                 # self.logger.info(f"[AmbientWeather] {layer} item description: {item['desc']}")
-                self.post_item(rec)
+                self.post_item(item)
                 sys.stdout.flush()
-            elif msg.get('type') == 'udp':
-                payload = msg.get('payload', b'')
+            elif last_msg.get('type') == 'udp':
+                payload = last_msg.get('payload', b'')
                 rec = self.decoder.decode(payload)
-                rec['_transport'] = msg.get('transport', {})
+                rec['_transport'] = last_msg.get('transport', {})
                 print(json.dumps(rec, indent=2 if pretty else None, ensure_ascii=False))
                 sys.stdout.flush()
             else:
                 pass
-            processed += 1
         return processed

@@ -1,6 +1,7 @@
 import json, datetime as dt
 from typing import Dict, Any, Optional, List
 from util.http import post_json, http_get, post_multipart
+from mattermostdriver import Driver
 
 TOP_FIELDS = ["event","headline","severity","urgency","certainty","mag","place","distance_km_from_origin","distance_km","name","layer","title","link"]
 
@@ -25,7 +26,7 @@ def render_fields(item: Dict[str, Any]) -> str:
     return "\n".join(lines) or json.dumps(item, ensure_ascii=False, indent=2)
 
 class Notifier:
-    def __init__(self, cfg: Dict[str, Any]):
+    def __init__(self, cfg: Dict[str, Any], mattermost_api: Driver):
         self.type=(cfg.get('type') or 'webhook').lower()
         self.stream=bool(cfg.get('stream', True))
         self.style=(cfg.get('style') or 'markdown').lower()
@@ -38,24 +39,25 @@ class Notifier:
         self.token=cfg.get('token','')
         self.channel_id=cfg.get('channel_id',''); self.team=cfg.get('team',''); self.channel=cfg.get('channel','')
         self._cached_channel_id=None
+        self.mattermost_api = mattermost_api
 
     def _base(self):
         port = f":{self.port}" if self.port and self.port not in (80,443) else ""
         return f"{self.scheme}://{self.host}{port}".rstrip('/')
 
-    def _resolve_channel_id(self) -> Optional[str]:
-        if self._cached_channel_id: return self._cached_channel_id
-        if self.channel_id: self._cached_channel_id=self.channel_id; return self.channel_id
-        if not (self.host and self.token and self.team and self.channel): return None
-        base=self._base()
-        headers={"Authorization": f"Bearer {self.token}", "Accept": "application/json"}
-        t=http_get(f"{base}/api/v4/teams/name/{self.team}", headers=headers).json(); team_id=t.get('id')
-        if not team_id: 
-            return None
-        c=http_get(f"{base}/api/v4/teams/{team_id}/channels/name/{self.channel}", headers=headers).json(); chan_id=c.get('id')
-        if chan_id: 
-            self._cached_channel_id=chan_id
-        return chan_id
+    # def _resolve_channel_id(self) -> Optional[str]:
+    #     if self._cached_channel_id: return self._cached_channel_id
+    #     if self.channel_id: self._cached_channel_id=self.channel_id; return self.channel_id
+    #     if not (self.host and self.token and self.team and self.channel): return None
+    #     base=self._base()
+    #     headers={"Authorization": f"Bearer {self.token}", "Accept": "application/json"}
+    #     t=http_get(f"{base}/api/v4/teams/name/{self.team}", headers=headers).json(); team_id=t.get('id')
+    #     if not team_id: 
+    #         return None
+    #     c=http_get(f"{base}/api/v4/teams/{team_id}/channels/name/{self.channel}", headers=headers).json(); chan_id=c.get('id')
+    #     if chan_id: 
+    #         self._cached_channel_id=chan_id
+    #     return chan_id
 
     def _compose_text(self, title: str, items: List[Dict[str, Any]], template: Optional[str]):
         if self.style == 'fields' and items:
@@ -87,16 +89,21 @@ class Notifier:
     # ---------- Bot posts + file uploads ----------
     def _send_bot(self, title: str, payload: Dict[str, Any], ocfg: Dict[str, Any], template: Optional[str]):
         # allow per-source overrides
-        scheme=ocfg.get('scheme', self.scheme); host=ocfg.get('host', self.host); port=int(ocfg.get('port', self.port))
+        scheme=ocfg.get('scheme', self.scheme)
+        host=ocfg.get('host', self.host)
+        port=int(ocfg.get('port', self.port))
         token=ocfg.get('token', self.token)
         # resolve channel id if not explicitly set
-        chan_id=ocfg.get('channel_id') or self._cached_channel_id
+        chan_id = self._get_channel_id_by_name(ocfg.get('channel'), ocfg.get('team'), ocfg.get('user'))
+        # chan_id=ocfg.get('channel_id') or self._cached_channel_id
         if not chan_id:
-            self.scheme, self.host, self.port, self.token = scheme, host, port, token
-            self.team = ocfg.get('team', self.team)
-            self.channel = ocfg.get('channel', self.channel)
-            chan_id=self._resolve_channel_id()
-            if not chan_id: return None
+            # self.scheme, self.host, self.port, self.token = scheme, host, port, token
+            # self.scheme, self.host, self.port = scheme, host, port
+            # self.team = ocfg.get('team', self.team)
+            # self.channel = ocfg.get('channel', self.channel)
+            # chan_id=self._resolve_channel_id()
+            # if not chan_id: return None
+            return None
 
         base=f"{scheme}://{host}{(':'+str(port)) if port and port not in (80,443) else ''}".rstrip('/')
         headers={"Authorization": f"Bearer {token}", "Content-Type":"application/json"}
@@ -127,3 +134,22 @@ class Notifier:
         if root_id: 
             body["root_id"] = root_id
         return post_json(url, body, headers=headers)
+
+    def _get_channel_id_by_name(self, channel_name, team_name, user_name):
+        teams = self.mattermost_api.teams.get_teams()
+        team = next((team for team in teams if team['display_name'] == team_name), None)
+        if team is None:
+            print(f'Team {team_name} not found.')
+            return
+        team_id = team['id']
+        channels = self.mattermost_api.channels.get_channels_for_user(get_user_id_by_name(user_name), team_id)
+        if not channels:
+            print(f'No channels found for team {team_name}.')
+            return
+        channel = next((channel for channel in channels if channel['display_name'] == channel_name), None)
+        if channel is None:
+            print(f'Channel {channel_name} not found in team {team_name}.')
+            return
+        return channel['id']
+        # print(f'Channel {channel_name} ID: {channel["id"]}')
+        # print(json.dumps(channel, indent=4))	

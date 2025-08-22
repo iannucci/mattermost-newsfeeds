@@ -3,12 +3,15 @@ from typing import Dict, Any, Optional
 from urllib.parse import parse_qs, urlsplit, unquote_plus
 from datetime import datetime, timezone
 import re
+import pytz
 
 _QS_RUN_RE   = re.compile(r'([A-Za-z0-9_]+=[^&\s]+(?:[&;,\s]+[A-Za-z0-9_]+=[^&\s]+)+)')
 _PAIR_RE     = re.compile(r'([A-Za-z0-9_]+)\s*=\s*([^&;,\s]+)')
 
 class WS5000Decoder:
     """Decode WS-5000 UDP/HTTP payloads into a normalized dict (robust)."""
+    def __init__(self, params):
+        self.params = params
 
     # -------- parsing --------
     def _safe_text(self, raw: bytes) -> str:
@@ -153,7 +156,7 @@ class WS5000Decoder:
                 pressure_hpa = v * 33.8638866667
                 break
 
-        pressure_in_h20 = pressure_hpa * 0.295299830714 if pressure_hpa is not None else None
+        pressure_in_hg = pressure_hpa * 0.02952998 if pressure_hpa is not None else None
 
         rr_in = self._to_float(fields.get('rainratein'))
         rain_rate_in_hr = rr_in if rr_in is not None else 0
@@ -171,11 +174,15 @@ class WS5000Decoder:
         pm10 = ( self._to_float(fields.get('pm10'))
                  or self._to_float(fields.get('pm10_ch1')) )
 
-        dt_utc = None
+        dt_utc = datetime.now(timezone.utc)
         for k in ('dateutc', 'datetime', 'time_utc'):
             if k in fields:
-                dt_utc = self._parse_dateutc(fields[k]); break
+                dt_utc = self._parse_dateutc(fields[k])
+                break
         ts_utc = dt_utc.isoformat().replace('+00:00','Z') if dt_utc else None
+        tz_string = self.params.get('timezone')
+        tz = pytz.timezone(self.params["timezone"])
+        ts_local_time = dt_utc.astimezone(tz).isoformat() if (dt_utc and tz_string) else None
 
         battery = None
         for k in ('batt','battery','lowbatt','wh65batt','wh32batt'):
@@ -185,21 +192,15 @@ class WS5000Decoder:
                 break
 
         return {
-            'timestamp_utc': ts_utc,
-            'temperature_F': temp_f,
-            'humidity_pct': humidity,
-            'wind_mph': wind_mph,
-            'wind_gust_mph': wind_gust_mph,
+            'timestamp_local': ts_local_time,
+            'temperature_F': int(temp_f),
+            'humidity_pct': int(humidity),
+            'wind_mph': int(wind_mph),
+            'wind_gust_mph': int(wind_gust_mph),
             'wind_dir': self._degrees_to_compass(wind_dir),
-            'pressure_in_h20': pressure_in_h20,
-            'rain_rate_in_hr': rain_rate_in_hr,
-            'rain_daily_mm': rain_daily_in,
+            'pressure_in_hg': f'{pressure_in_hg:.2f}',
+            'rain_rate_in_hr': f'{rain_rate_in_hr:.1f}',
+            'rain_daily_in': f'{rain_daily_in:.1f}',
             'solar_wm2': solar_wm2,
-            'uv_index': uv_index,
-            'pm2p5_ugm3': pm25,
-            'pm10_ugm3': pm10,
-            'indoor_temperature_C': indoor_c,
-            'indoor_humidity_pct': indoor_h,
-            'battery': battery,
-            'raw': fields,
+            'uv_index': int(uv_index),
         }
