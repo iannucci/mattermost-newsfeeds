@@ -16,7 +16,7 @@ def load_sources(cfg, logger, seen, mattermost_api):
     for source_config in cfg.get('sources',[]):
         if not source_config.get('enabled',True): 
             continue
-        notifier=Notifier(source_config.get('notifier_params',{}), mattermost_api)
+        notifier=Notifier(source_config.get('notifier_params',{}), mattermost_api, logger)
         mod=importlib.import_module(source_config['module'])
         cls=getattr(mod, source_config['class'])
         inst=cls(source_config.get('name', source_config['class']), source_config, general, seen, logger, notifier)
@@ -55,11 +55,6 @@ def scheduler_loop(cfg, logger, mattermost_api):
                 ran=True
         time.sleep(sleep_min if ran else sleep_max)
         seen.purge_old()
-
-# lookup_channel_by_name('National Weather Service', 'Palo Alto ESV', 'w6ei')
-# lookup_channel_by_name('CalTrans', 'Palo Alto ESV', 'w6ei')
-# lookup_channel_by_name('US Geological Survey', 'Palo Alto ESV', 'w6ei')
-# lookup_channel_by_name('Local Weather', 'Palo Alto ESV', 'w6ei')
 
 def main():
     ap=argparse.ArgumentParser(description='mattermost-newsfeeds')

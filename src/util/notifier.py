@@ -26,7 +26,7 @@ def render_fields(item: Dict[str, Any]) -> str:
     return "\n".join(lines) or json.dumps(item, ensure_ascii=False, indent=2)
 
 class Notifier:
-    def __init__(self, cfg: Dict[str, Any], mattermost_api: Driver):
+    def __init__(self, cfg: Dict[str, Any], mattermost_api: Driver, logger):
         self.type=(cfg.get('type') or 'webhook').lower()
         self.stream=bool(cfg.get('stream', True))
         self.style=(cfg.get('style') or 'markdown').lower()
@@ -37,9 +37,10 @@ class Notifier:
         # bot
         self.scheme=cfg.get('scheme','https'); self.host=cfg.get('host',''); self.port=int(cfg.get('port',443))
         self.token=cfg.get('token','')
-        self.channel_id=cfg.get('channel_id',''); self.team=cfg.get('team',''); self.channel=cfg.get('channel','')
-        self._cached_channel_id=None
+        self.channel_id= None  # cfg.get('channel_id',''); self.team=cfg.get('team',''); self.channel=cfg.get('channel','')
+        # self._cached_channel_id=None
         self.mattermost_api = mattermost_api
+        self.logger = logger
 
     def _base(self):
         port = f":{self.port}" if self.port and self.port not in (80,443) else ""
@@ -94,9 +95,10 @@ class Notifier:
         port=int(ocfg.get('port', self.port))
         token=ocfg.get('token', self.token)
         # resolve channel id if not explicitly set
-        chan_id = self._get_channel_id_by_name(ocfg.get('channel'), ocfg.get('team'), ocfg.get('user'))
+        self.channel_id = self._get_channel_id_by_name(ocfg.get('channel'), ocfg.get('team'), ocfg.get('user'))
         # chan_id=ocfg.get('channel_id') or self._cached_channel_id
-        if not chan_id:
+        if not self.channel_id:
+            self.logger.warning("[Notifier] Missing channel ID; cannot send bot message.")
             # self.scheme, self.host, self.port, self.token = scheme, host, port, token
             # self.scheme, self.host, self.port = scheme, host, port
             # self.team = ocfg.get('team', self.team)
@@ -117,11 +119,11 @@ class Notifier:
             file_bytes=json.dumps(payload, ensure_ascii=False, indent=2).encode('utf-8')
             finfo={"files": ("newsfeed.json", file_bytes, "application/json")}
             upload_headers={"Authorization": f"Bearer {token}"}
-            upload=post_multipart(f"{base}/api/v4/files", files=finfo, data={"channel_id": chan_id}, headers=upload_headers)
+            upload=post_multipart(f"{base}/api/v4/files", files=finfo, data={"channel_id": self.channel_id}, headers=upload_headers)
             file_id=upload.json().get('file_infos',[{}])[0].get('id')
             if not file_id: 
                 return None
-            body={"channel_id": chan_id, "message": f"{title}", "file_ids": [file_id]}
+            body={"channel_id": self.channel_id, "message": f"{title}", "file_ids": [file_id]}
             root_id = ocfg.get('thread_root_id') or self.thread_root_id
             if root_id: 
                 body["root_id"] = root_id
@@ -129,7 +131,7 @@ class Notifier:
 
         # otherwise, plain text message
         text=self._compose_text(title, items, template)
-        body={"channel_id": chan_id, "message": text}
+        body={"channel_id": self.channel_id, "message": text}
         root_id = ocfg.get('thread_root_id') or self.thread_root_id
         if root_id: 
             body["root_id"] = root_id
@@ -139,17 +141,17 @@ class Notifier:
         teams = self.mattermost_api.teams.get_teams()
         team = next((team for team in teams if team['display_name'] == team_name), None)
         if team is None:
-            print(f'Team {team_name} not found.')
+            self.logger.warning(f'[Notifier] Team {team_name} not found.')
             return
         team_id = team['id']
-        channels = self.mattermost_api.channels.get_channels_for_user(get_user_id_by_name(user_name), team_id)
+        user_id = self.mattermost_api.users.get_user_by_username(user_name).get('id')
+        channels = self.mattermost_api.channels.get_channels_for_user(user_id, team_id)
         if not channels:
-            print(f'No channels found for team {team_name}.')
+            self.logger.warning(f'[Notifier] No channels found for team {team_name}.')
             return
         channel = next((channel for channel in channels if channel['display_name'] == channel_name), None)
         if channel is None:
-            print(f'Channel {channel_name} not found in team {team_name}.')
+            self.logger.warning(f'[Notifier] Channel {channel_name} not found in team {team_name}.')
             return
         return channel['id']
-        # print(f'Channel {channel_name} ID: {channel["id"]}')
-        # print(json.dumps(channel, indent=4))	
+	

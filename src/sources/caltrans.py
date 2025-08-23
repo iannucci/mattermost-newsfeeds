@@ -50,13 +50,13 @@ class Caltrans(SourceBase):
                         item['desc']=soup.get_text(separator=' ', strip=True).replace("Information courtesy of", "").strip()
                     else:
                         item['desc']=unescape(item.get('description', ''))
-                    self.logger.info(f"[CalTrans] {layer} item description: {item['desc']}")
+                    self.logger.debug(f"[CalTrans] {layer} item description: {item['desc']}")
                     self.post_item(item)
                     new_count+=1
             except Exception as e:
                 self.logger.error(f"[CalTrans] {layer} error: {e}")
-        if new_count: 
-            self.logger.info(f"[CalTrans] {new_count} new item(s)")
+        if new_count > 0: 
+            self.logger.debug(f"[CalTrans] {new_count} new item(s)")
         else: 
             self.logger.debug("[CalTrans] no new items")
         return new_count

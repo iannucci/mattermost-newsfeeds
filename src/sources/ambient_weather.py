@@ -37,17 +37,15 @@ class AmbientWeather(SourceBase):
             if last_msg.get('type') == 'http':
                 fields = last_msg.get('fields', {})
                 item = self.decoder.normalize_fields(fields)
-                # item['_transport'] = last_msg.get('transport', {})
-                # print(json.dumps(item, indent=2 if pretty else None, ensure_ascii=False))
-                # self.logger.info(f"[AmbientWeather] {layer} item description: {item['desc']}")
                 self.post_item(item)
                 sys.stdout.flush()
             elif last_msg.get('type') == 'udp':
                 payload = last_msg.get('payload', b'')
                 rec = self.decoder.decode(payload)
                 rec['_transport'] = last_msg.get('transport', {})
-                print(json.dumps(rec, indent=2 if pretty else None, ensure_ascii=False))
+                self.logger.debug(json.dumps(rec, indent=2 if pretty else None, ensure_ascii=False))
                 sys.stdout.flush()
             else:
                 pass
+        self.logger.info(f"[AmbientWeather] processed {processed} message(s)")
         return processed
