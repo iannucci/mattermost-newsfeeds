@@ -1,20 +1,20 @@
 {
   "general": {
     "program_name": "mattermost-newsfeeds",
-    "user_agent": "mattermost-newsfeeds/3.0 (mailto:you@example.com)",
+    "user_agent": "mattermost-newsfeeds/3.0 (mailto:bob@rail.com)",
     "dry_run": false,
     "seen_store_path": "state/seen.json",
     "seen_ttl_days": 7,
     "location": {
-      "lat": 37.0,
-      "lon": -122.0
+      "lat": LATITUDE,
+      "lon": LONGITUDE
     },
     "log_level": "INFO",
     "sleep_min": 1,
     "sleep_max": 5,
     "mattermost": {
-      "url": "server.domain",
-      "token": "xxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "host": "MATTERMOST-SERVER",
+      "token": "XXXXXXXXXXXXXXXXX",
       "scheme": "http",
       "port": 80,
       "basepath": "/api/v4"
@@ -26,7 +26,7 @@
       "enabled": true,
       "module": "sources.nws",
       "class": "NWS",
-      "poll_seconds": 300,
+      "poll_seconds": 60,
       "params": {
         "api_url": "https://api.weather.gov/alerts/active"
       },
@@ -39,12 +39,13 @@
         "batch_threshold": 10,
         "webhook_url": "",
         "scheme": "http",
-        "host": "pa-chat.local.mesh",
+        "host": "MATTERMOST-SERVER",
         "port": 80,
-        "team": "Palo Alto ESV",
+        "basepath": "/api/v4",
+        "team": "TEAM",
         "channel": "National Weather Service",
-        "user": "hoover",
-        "token": "xxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "user": "USER",
+        "token": "XXXXXXXXXXXXXXXXX"
       }
     },
     {
@@ -52,10 +53,10 @@
       "enabled": true,
       "module": "sources.usgs",
       "class": "USGS",
-      "poll_seconds": 300,
+      "poll_seconds": 60,
       "params": {
         "feed_url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",
-        "max_km": 150.0
+        "max_mi": 100.0
       },
       "template": "**[USGS] Earthquake M{mag}** \u2014 {place}  ({distance_km_from_origin} km)\n{url}",
       "notifier": {
@@ -66,12 +67,13 @@
         "batch_threshold": 10,
         "webhook_url": "",
         "scheme": "http",
-        "host": "pa-chat.local.mesh",
+        "host": "MATTERMOST-SERVER",
         "port": 80,
-        "team": "Palo Alto ESV",
+        "basepath": "/api/v4",
+        "team": "TEAM",
         "channel": "US Geological Survey",
-        "user": "hoover",
-        "token": "xxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "user": "USER",
+        "token": "XXXXXXXXXXXXXXXXX"
       }
     },
     {
@@ -79,9 +81,9 @@
       "enabled": true,
       "module": "sources.caltrans",
       "class": "Caltrans",
-      "poll_seconds": 300,
+      "poll_seconds": 60,
       "params": {
-        "max_km": 80.0,
+        "max_mi": 10.0,
         "endpoints": {
           "lane_closures": "https://quickmap.dot.ca.gov/data/lcs2way.kml",
           "chp_incidents": "https://quickmap.dot.ca.gov/data/chp-only.kml",
@@ -90,7 +92,7 @@
         },
         "layer_filter_prefix": ""
       },
-      "template": "**[CalTrans]** \u2014 {name}  ({distance_km} km)\n{desc}",
+      "template": "**[CalTrans]** \u2014 {name}  ({distance_mi} mi)\n{desc}",
       "notifier": {
         "type": "bot",
         "stream": true,
@@ -99,17 +101,18 @@
         "batch_threshold": 10,
         "webhook_url": "",
         "scheme": "http",
-        "host": "pa-chat.local.mesh",
+        "host": "MATTERMOST-SERVER",
         "port": 80,
-        "team": "Palo Alto ESV",
+        "basepath": "/api/v4",
+        "team": "TEAM",
         "channel": "CalTrans",
-        "user": "hoover",
-        "token": "xxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "user": "USER",
+        "token": "XXXXXXXXXXXXXXXXX"
       }
     },
     {
       "name": "PAO",
-      "enabled": true,
+      "enabled": false,
       "module": "sources.pao",
       "class": "PAO",
       "poll_seconds": 600,
@@ -126,26 +129,27 @@
         "batch_threshold": 10,
         "webhook_url": "",
         "scheme": "http",
-        "host": "pa-chat.local.mesh",
+        "host": "MATTERMOST-SERVER",
         "port": 80,
-        "team": "Palo Alto ESV",
+        "basepath": "/api/v4",
+        "team": "TEAM",
         "channel": "Palo Alto Online",
-        "user": "hoover",
-        "token": "xxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "user": "USER",
+        "token": "XXXXXXXXXXXXXXXXX"
       }
     },
     {
       "name": "PulsePoint",
-      "enabled": true,
+      "enabled": false,
       "module": "sources.pulsepoint",
       "class": "PulsePoint",
-      "poll_seconds": 3600,
+      "poll_seconds": 60,
       "params": {
-        "agency_id": "",
-        "respond_url": "https://web.pulsepoint.org/?agencies=00000",
+        "agency_id": "43060",
+        "respond_url": "https://web.pulsepoint.org/?agencies=43060",
         "broadcastify": "https://www.broadcastify.com/listen/feed/34259"
       },
-      "template": "**[PulsePoint]** \u2014 Palo Alto FD\nRespond: {respond_url}\nRadio: {broadcastify}",
+      "template": "**PulsePoint** \u2014 Palo Alto FD\nRespond: {respond_url}\nRadio: {broadcastify}",
       "notifier": {
         "type": "bot",
         "stream": true,
@@ -154,20 +158,21 @@
         "batch_threshold": 10,
         "webhook_url": "",
         "scheme": "http",
-        "host": "pa-chat.local.mesh",
+        "host": "MATTERMOST-SERVER",
         "port": 80,
-        "team": "Palo Alto ESV",
+        "basepath": "/api/v4",
+        "team": "TEAM",
         "channel": "PulsePoint",
-        "user": "hoover",
-        "token": "xxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "user": "USER",
+        "token": "XXXXXXXXXXXXXXXXX"
       }
     },
     {
       "name": "AmbientWeather",
-      "enabled": true,
+      "enabled": false,
       "module": "sources.ambient_weather",
       "class": "AmbientWeather",
-      "poll_seconds": 10,
+      "poll_seconds": 600,
       "mode": "http",
       "params": {
         "timezone": "America/Los_Angeles",
@@ -185,7 +190,7 @@
           "dump_on_empty": true
         }
       },
-      "template": "**[AmbientWeather]** \u2014 Local conditions:\n  Temp {temperature_F}\u00b0F\n  Winds from the {wind_dir} at {wind_mph}, gusting to {wind_gust_mph} mph\n  Humidity {humidity_pct}%\n  Pressure {pressure_in_hg} in Hg\n  UV index {uv_index}\n  Rain rate {rain_rate_in_hr} in/h, daily {rain_daily_in} in",
+      "template": "**[AmbientWeather]** \u2014 Local conditions at {timestamp_local}:\n  Temp {temperature_F}\u00b0F\n  Winds from the {wind_dir} at {wind_mph}, gusting to {wind_gust_mph} mph\n  Humidity {humidity_pct}%\n  Pressure {pressure_in_hg} in Hg\n  UV index {uv_index}\n  Rain rate {rain_rate_in_hr} in/h, daily {rain_daily_in} in",
       "notifier": {
         "type": "bot",
         "stream": true,
@@ -194,11 +199,13 @@
         "batch_threshold": 10,
         "webhook_url": "",
         "scheme": "http",
-        "host": "pa-chat.local.mesh",
+        "host": "MATTERMOST-SERVER",
         "port": 80,
-        "team": "Palo Alto ESV",
-        "channel": "Ambient Weather",
-        "user": "hoover"
+        "basepath": "/api/v4",
+        "team": "TEAM",
+        "channel": "Local Weather",
+        "user": "USER",
+        "token": "XXXXXXXXXXXXXXXXX"
       }
     }
   ]

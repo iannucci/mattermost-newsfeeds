@@ -64,7 +64,15 @@ def main():
     with open(cfg_path,'r',encoding='utf-8') as f: 
         cfg=json.load(f)
     logger=build_logger(cfg['general'].get('log_level','DEBUG'))
-    mattermost_api = Driver(cfg['general'].get('mattermost', {}))
+    general_cfg=cfg.get('general',{})
+    login_cfg={
+        'url': general_cfg['mattermost'].get('host',''),
+        'token': general_cfg['mattermost'].get('token',''),
+        'scheme': general_cfg['mattermost'].get('scheme','http'),
+        'port': int(general_cfg['mattermost'].get('port',80)),
+        'basepath': general_cfg['mattermost'].get('basepath','/api/v4').rstrip('/')
+    }
+    mattermost_api = Driver(login_cfg)
     mattermost_api.login()
     scheduler_loop(cfg, logger, mattermost_api)
 

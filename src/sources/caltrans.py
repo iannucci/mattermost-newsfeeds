@@ -15,7 +15,7 @@ class Caltrans(SourceBase):
     def poll(self, now_ts: float)->int:
         lat0=self.general['location']['lat']
         lon0=self.general['location']['lon']
-        max_km=float(self.params.get('max_km',80.0))
+        max_mi=float(self.params.get('max_mi',10.0))
         endpoints=self.params.get('endpoints',{})
         layer_filter=(self.params.get('layer_filter_prefix') or '').strip()
         headers={'User-Agent': self.general.get('user_agent',''), 'Accept':'application/vnd.google-earth.kml+xml, application/xml, text/xml'}
@@ -32,14 +32,14 @@ class Caltrans(SourceBase):
                     if None in (lat,lon): 
                         # self.logger.debug(f"[CalTrans] skipping item {it} due to missing lat/lon")
                         continue
-                    d=km_between(lat0,lon0,lat,lon)
-                    if d>max_km: 
+                    d=km_between(lat0,lon0,lat,lon)*0.621371 # to miles
+                    if d>max_mi: 
                         # self.logger.debug(f"[CalTrans] skipping item {it} due to distance {d} km > max {max_km} km")
                         continue
 
                     it['layer']=layer
                     item=dict(it)
-                    item['distance_km']=round(d,1)
+                    item['distance_mi']=round(d*0.621371,1)
                     item['layer']=layer
                     fp=f"{self.bucket}|{layer}|{item.get('name')}|{lat}|{lon}"
                     if self.seen.is_seen(self.bucket, fp): 
@@ -56,7 +56,7 @@ class Caltrans(SourceBase):
             except Exception as e:
                 self.logger.error(f"[CalTrans] {layer} error: {e}")
         if new_count > 0: 
-            self.logger.debug(f"[CalTrans] {new_count} new item(s)")
+            self.logger.info(f"[CalTrans] processed {new_count} new item(s)")
         else: 
             self.logger.debug("[CalTrans] no new items")
         return new_count

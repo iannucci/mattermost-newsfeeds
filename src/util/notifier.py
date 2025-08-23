@@ -94,6 +94,7 @@ class Notifier:
         host=ocfg.get('host', self.host)
         port=int(ocfg.get('port', self.port))
         token=ocfg.get('token', self.token)
+        basepath=ocfg.get('basepath', '/api/v4').rstrip('/')
         # resolve channel id if not explicitly set
         self.channel_id = self._get_channel_id_by_name(ocfg.get('channel'), ocfg.get('team'), ocfg.get('user'))
         # chan_id=ocfg.get('channel_id') or self._cached_channel_id
