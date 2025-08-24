@@ -56,9 +56,10 @@
       "poll_seconds": 60,
       "params": {
         "feed_url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",
-        "max_mi": 100.0
+        "max_mi": 100.0,
+        "timezone": "America/Los_Angeles"
       },
-      "template": "**[USGS] Earthquake M{mag}** \u2014 {place}  ({distance_km_from_origin} km)\n{url}",
+      "template": "**[USGS]** Earthquake M{mag} at {timestamp_local} \u2014 {place} ({distance_mi_from_origin} mi)\n{url}",
       "notifier": {
         "type": "bot",
         "stream": true,
