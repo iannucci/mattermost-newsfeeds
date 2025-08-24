@@ -10,7 +10,7 @@ from util.notifier import Notifier
 class AmbientWeather(SourceBase):
     def __init__(self, name: str, cfg: Dict[str, Any], general: Dict[str, Any], seen, logger, notifier: Notifier) -> None:
         super().__init__(name, cfg, general, seen, logger, notifier)
-        self.handler = Handler(self.cfg)
+        self.handler = Handler(self.cfg, logger)
         self.handler.start()
         self.decoder = WS5000Decoder(self.params)
 

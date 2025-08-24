@@ -61,8 +61,12 @@ def main():
     ap.add_argument('--config', default=DEFAULT_CFG, help=f"Path to config file (default: {DEFAULT_CFG})")
     args=ap.parse_args()
     cfg_path=find_config_path(args.config)
-    with open(cfg_path,'r',encoding='utf-8') as f: 
-        cfg=json.load(f)
+    try:
+        with open(cfg_path,'r',encoding='utf-8') as f: 
+            cfg=json.load(f)
+    except Exception as e:
+        print(f"Error loading config {cfg_path}: {e}")
+        return
     logger=build_logger(cfg['general'].get('log_level','DEBUG'))
     general_cfg=cfg.get('general',{})
     login_cfg={

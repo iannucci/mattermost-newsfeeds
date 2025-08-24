@@ -3,12 +3,13 @@ from typing import Dict, Any, Optional
 import threading, queue, time, sys
 
 class Handler:
-    def __init__(self, cfg: Dict[str, Any]):
+    def __init__(self, cfg: Dict[str, Any], logger):
         self.cfg = cfg or {}
         self.mode = str(self.cfg.get('mode', 'http')).lower()
         self._q: 'queue.Queue[Dict[str, Any]]' = queue.Queue()
         self._thread: Optional[threading.Thread] = None
         self._stop = threading.Event()
+        self.logger = logger
 
     def start(self) -> None:
         if self.mode == 'udp':
@@ -80,10 +81,10 @@ class Handler:
 
         server = HTTPServer((host, port), RequestHandler)
         try:
-            print(f"[ws5000_handler:http] Listening on {host}:{port}", file=sys.stderr, flush=True)
+            self.logger.debug(f"[ws5000_handler:http] Listening on {host}:{port}", file=sys.stderr, flush=True)
             server.serve_forever(poll_interval=0.5)
         except Exception as e:
-            print(f"[ws5000_handler:http] server error: {e}", file=sys.stderr, flush=True)
+            self.logger.debug(f"[ws5000_handler:http] server error: {e}", file=sys.stderr, flush=True)
         finally:
             try: server.server_close()
             except Exception: pass
@@ -97,6 +98,6 @@ class Handler:
         def on_packet(payload: bytes, meta: Dict[str, Any]) -> None:
             self._q.put({'type': 'udp', 'payload': payload, 'transport': meta, 'ts': time.time()})
 
-        print(f"[ws5000_handler:udp] Capture iface={iface or '(auto)'} port={port}", file=sys.stderr, flush=True)
+        self.logger.debug(f"[ws5000_handler:udp] Capture iface={iface or '(auto)'} port={port}", file=sys.stderr, flush=True)
         cap = WS5000BroadcastCapture(dest_port=port, iface=iface, callback=on_packet, debug=True)
         cap.run_blocking()
