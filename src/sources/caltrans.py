@@ -58,7 +58,7 @@ class Caltrans(SourceBase):
                     if soup and isinstance(soup, Tag):
                         self.logger.info(f"[CalTrans] sent {item['description']}\n")
                         # (item['desc'], item["timestamp_local"])= self._parse_caltrans_soup(soup)
-                        (item['desc'], item["timestamp_local"])= self._extract_update_and_text(soup)
+                        (item['desc'], item["timestamp_local"])= self._extract_incident_from_soup(soup)
                     else:
                         item['desc']=unescape(item.get('description', ''))
                         item['timestamp_local']=datetime.now().isoformat()
@@ -87,131 +87,47 @@ class Caltrans(SourceBase):
         pattern = re.compile(r'\b(' + '|'.join(re.escape(k) for k in self.acronyms.keys()) + r')\b')
         return pattern.sub(replace, text) if self.acronyms else text
 
-    def _extract_update_and_text(self, soup):
-        """
-        Extract:
-        - the timestamp from <p class="update-stamp"> (both raw string and parsed datetime if possible)
-        - concatenated text from the remaining <p> tags, ignoring the 'Information courtesy of' paragraph,
-            replacing <br> with spaces, and stripping leading timestamps from paragraphs with align='left'.
-
-        Returns:
-        dict: {
-            "updated_raw": str | None,      # e.g., "08/23/2025 6:55pm"
-            "updated_dt": datetime | None,  # parsed datetime if format matches
-            "text": str                     # concatenated incident text
-        }
-        """
-        # soup = BeautifulSoup(html, "html.parser")
-
-        # Replace <br> tags with spaces globally
-        for br in soup.find_all("br"):
-            br.replace_with(" ")
-
-        # Pull update timestamp (raw string like "Last updated: 08/23/2025 6:55pm")
-        updated_p = soup.find("p", class_="update-stamp")
-        updated_raw = None
+    def _extract_incident_from_soup(self, soup):
+        # Parse update timestamp
         updated_dt = None
-
+        updated_p = soup.find("p", class_="update-stamp")
         if updated_p:
             raw = updated_p.get_text(strip=True)
-            # Extract the MM/DD/YYYY hh:mm(am|pm) portion
             m = re.search(r"(\d{2}/\d{2}/\d{4}\s+\d{1,2}:\d{2}\s*[ap]m)", raw, flags=re.I)
             if m:
-                updated_raw = m.group(1)
                 try:
-                    updated_dt = datetime.strptime(updated_raw, "%m/%d/%Y %I:%M%p")
+                    updated_dt = datetime.strptime(m.group(1).upper(), "%m/%d/%Y %I:%M%p")
                 except ValueError:
                     updated_dt = None
-            else:
-                # Fall back to whole string if pattern not found
-                updated_raw = raw
 
-        # Regex to remove a leading timestamp like "Aug 23 2025  6:53PM" at the start of a paragraph
-        lead_ts = re.compile(
-            r"^\s*[A-Za-z]{3}\s+\d{1,2}\s+\d{4}\s+\d{1,2}:\d{2}\s*[AP]M\s*",
-            flags=re.I
-        )
+        # Patterns
+        lead_ts = re.compile(r"^\s*[A-Za-z]{3,9}\s+\d{1,2}\s+\d{4}\s+\d{1,2}:\d{2}\s*[AP]M\s*", re.I)
+        bracket_nums = re.compile(r"\s*\[\s*\d+\s*\]\s*")  # e.g., [2], [12]
 
         parts = []
         for p in soup.find_all("p"):
-            # Skip update-stamp and the "Information courtesy of" paragraph
+            # Skip update-stamp and info-credit paragraphs
             if "update-stamp" in (p.get("class") or []):
                 continue
-
-            text = p.get_text(" ", strip=True)
-
-            # Ignore "Information courtesy of ..." paragraphs (case-insensitive)
-            if text.lower().startswith("information courtesy of"):
+            block = p.get_text(separator="\n", strip=True)
+            if not block or "information courtesy of" in block.lower():
                 continue
 
-            # Only strip leading timestamps from paragraphs with align='left'
+            lines = [ln for ln in block.split("\n") if ln.strip()]
             if p.get("align", "").lower() == "left":
-                text = lead_ts.sub("", text)
+                # Remove leading timestamps per line
+                lines = [lead_ts.sub("", ln).strip() for ln in lines if ln.strip()]
 
+            # Join lines, then remove bracketed numeric tags
+            text = " ".join(lines)
+            text = bracket_nums.sub(" ", text)
+
+            # Collapse whitespace and add
+            text = re.sub(r"\s+", " ", text).strip()
             if text:
                 parts.append(text)
 
-        return " ".join(parts), updated_dt
-
-        # return {
-        #     "updated_raw": updated_raw,
-        #     "updated_dt": updated_dt,
-        #     "text": " ".join(parts)
-        # }
-
-    def _parse_caltrans_soup(self, soup) -> str:
-        # Enter with soup that is structured like this:
-        #
-        # <div style="font-size:1.15em;">
-        #   <img src="https://quickmap.dot.ca.gov/img/chp-32x32.png" style="float:left">
-        #   <p align="left">Aug 23 2025 10:08AM <br> 1125-Traffic Hazard <br> Us101 N / San Antonio Rd Ofr </p>
-        #   <p align="left"> </p>
-        #   <p>Information courtesy of <img src="https://quickmap.dot.ca.gov/QM/imagesquickmap/CHP_Badge_logo.png" height="30"></p>
-        #   <p class="update-stamp">Last updated: 08/23/2025 10:10am </p>
-        # </div>
-
-        # <div style="font-size:1.15em;">
-        #   <img src="https://quickmap.dot.ca.gov/img/chp-32x32.png" style="float:left">
-        #   <p align="left">Aug 23 2025 11:02AM <br> 1183-Trfc Collision-Unkn Inj <br> Us101 S / Woodside Rd Ofr </p>
-        #   <p align="left"> </p>
-        #   <p>Information courtesy of <img src="https://quickmap.dot.ca.gov/QM/imagesquickmap/CHP_Badge_logo.png" height="30"></p>
-        #   <p class="update-stamp">Last updated: 08/23/2025 11:03am </p>
-        # </div>
-
-        # <div style="font-size:1.15em;">
-        #   <img src="https://quickmap.dot.ca.gov/img/chp-32x32.png" style="float:left">
-        #   <p align="left">Aug 23 2025 11:16AM <br> 1125-Traffic Hazard <br> I280 N / El Monte Rd Ofr </p>
-        #   <p align="left"> </p>
-        #   <p>Information courtesy of <img src="https://quickmap.dot.ca.gov/QM/imagesquickmap/CHP_Badge_logo.png" height="30"></p>
-        #   <p class="update-stamp">Last updated: 08/23/2025 11:17am </p>
-        # </div>
-
-        # <div style="font-size:1.15em;">
-        #   <img src="https://quickmap.dot.ca.gov/img/chp-32x32.png" style="float:left">
-        #   <p align="left">Aug 23 2025 11:16AM <br> 1125-Traffic Hazard <br> I280 N / Alpine Rd Ofr </p>
-        #   <p align="left">Aug 23 2025 11:18AM [3] NO ASSOC VEH SEEN<br />Aug 23 2025 11:17AM [2] LARGE PIECE OF TIRE - BTN #3/#4 LNS<br /> </p>
-        #   <p>Information courtesy of <img src="https://quickmap.dot.ca.gov/QM/imagesquickmap/CHP_Badge_logo.png" height="30"></p>
-        #   <p class="update-stamp">Last updated: 08/23/2025 11:19am </p>
-        # </div>
-        self.logger.debug(f"[CalTrans] processing soup: {soup}")  
-
-        last_update_p = soup.find("p", class_="update-stamp")
-        if last_update_p:
-            time_string = last_update_p.get_text(strip=True).replace("Last updated:", "").strip()
-            time = datetime.strptime(time_string, time_format)
-        else:
-            time = datetime.now()
-
-        information_p_list = soup.find_all("p", align="left")
-        raw_text = ""
-        for information_p in information_p_list:
-            p_text = information_p.get_text(strip=True)
-            p_text_cleaned = re.sub(r'^\w{3} \d{1,2} \d{4} \d{1,2}:\d{2}(AM|PM)?\s*', '', p_text)
-            raw_text += p_text_cleaned
-
-        ts_local_time = time.isoformat()
-
-        return (ts_local_time, _de_acronymize(raw_text))
+        return self._de_acronymize(" ".join(parts)), updated_dt
 
     def _parse_kml(self, xml_text: str):
         root=ET.fromstring(xml_text)
