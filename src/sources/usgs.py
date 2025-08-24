@@ -1,6 +1,8 @@
 import datetime as dt
 from util.http import http_get
 from .base import SourceBase, km_between
+import pytz
+from datetime import datetime, timezone
 
 class USGS(SourceBase):
     bucket="usgs"
@@ -12,6 +14,9 @@ class USGS(SourceBase):
         data=http_get(feed, headers={"User-Agent": self.general.get("user_agent","")}).json()
         feats=data.get("features",[])
         new_count=0
+
+        tz = pytz.timezone(self.params["timezone"])
+
         for f in feats:
             props=f.get("properties",{})
             geom=f.get("geometry",{}) or {}
@@ -22,9 +27,20 @@ class USGS(SourceBase):
             dist=km_between(lat0,lon0,lat,lon)*0.621371 # to miles
             if dist>max_mi: 
                 continue
-            item={"id":f.get("id"),"time":(dt.datetime.utcfromtimestamp(props.get("time",0)/1000).isoformat()+"Z") if props.get("time") else None,
-                  "mag":props.get("mag"),"place":props.get("place"),"url":props.get("url"),
-                  "lat":lat,"lon":lon,"depth_km":depth,"distance_km_from_origin":round(dist,1)}
+
+            self.logger.debug(f'[USGS] Earthquake data: {f}')
+            self.logger.debug(f'[USGS] Time: {props.get("time")}')
+
+            unix_ts = int(props.get("time",0)/1000)  # time is of format 1756070780800
+            dt = datetime.fromtimestamp(unix_ts)
+            timestamp_local = dt.astimezone(tz).isoformat()
+
+            # item={"id":f.get("id"),"time":(dt.datetime.utcfromtimestamp(props.get("time",0)/1000).isoformat()+"Z") if props.get("time") else None,
+            #       "mag":props.get("mag"),"place":props.get("place"),"url":props.get("url"),
+            #       "lat":lat,"lon":lon,"depth_km":depth,"distance_km_from_origin":round(dist,1)}
+            item={"id":f.get("id"),"timestamp_local": timestamp_local,
+            "mag":props.get("mag"),"place":props.get("place"),"url":props.get("url"),
+            "lat":lat,"lon":lon,"depth_km":depth,"distance_mi_from_origin":round(dist,1)}
             fp=f"{self.bucket}|{item['id']}"
             if self.seen.is_seen(self.bucket, fp): 
                 continue
