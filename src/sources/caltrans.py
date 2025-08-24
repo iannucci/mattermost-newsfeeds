@@ -56,7 +56,7 @@ class Caltrans(SourceBase):
                     self.seen.mark_seen(self.bucket, fp)
                     soup=BeautifulSoup(item['description'], 'html.parser')
                     if soup and isinstance(soup, Tag):
-                        self.logger.info(f"[CalTrans] sent {item['description']}\n")
+                        self.logger.debug(f"[CalTrans] sent {item['description']}\n")
                         # (item['desc'], item["timestamp_local"])= self._parse_caltrans_soup(soup)
                         (item['desc'], item["timestamp_local"])= self._extract_incident_from_soup(soup)
                     else:
@@ -66,7 +66,7 @@ class Caltrans(SourceBase):
                     # item['desc']=self._de_acronymize(item['desc'])
 
                     # <debug>
-                    self.logger.info(f"[CalTrans] {layer} we substituted: {item['desc']}\n")
+                    self.logger.debug(f"[CalTrans] {layer} we substituted: {item['desc']}\n")
 
                     self.post_item(item)
                     new_count+=1
