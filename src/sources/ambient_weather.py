@@ -8,11 +8,11 @@ from .base import SourceBase
 from util.notifier import Notifier
 
 class AmbientWeather(SourceBase):
-    def __init__(self, name: str, cfg: Dict[str, Any], general: Dict[str, Any], seen, logger, notifier: Notifier) -> None:
-        super().__init__(name, cfg, general, seen, logger, notifier)
+    def __init__(self, name: str, cfg: Dict[str, Any], general_cfg: Dict[str, Any], seen, logger, notifier: Notifier) -> None:
+        super().__init__(name, cfg, general_cfg, seen, logger, notifier)
         self.handler = Handler(self.cfg, logger)
         self.handler.start()
-        self.decoder = WS5000Decoder(self.params)
+        self.decoder = WS5000Decoder(self.params, self.ts_local_string)
 
     def _pretty(self) -> bool:
         mode = str(self.cfg.get('mode', 'http')).lower()

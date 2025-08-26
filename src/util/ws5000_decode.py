@@ -5,54 +5,59 @@ from datetime import datetime, timezone
 import re
 import pytz
 
-_QS_RUN_RE   = re.compile(r'([A-Za-z0-9_]+=[^&\s]+(?:[&;,\s]+[A-Za-z0-9_]+=[^&\s]+)+)')
-_PAIR_RE     = re.compile(r'([A-Za-z0-9_]+)\s*=\s*([^&;,\s]+)')
+_QS_RUN_RE = re.compile(r"([A-Za-z0-9_]+=[^&\s]+(?:[&;,\s]+[A-Za-z0-9_]+=[^&\s]+)+)")
+_PAIR_RE = re.compile(r"([A-Za-z0-9_]+)\s*=\s*([^&;,\s]+)")
+
 
 class WS5000Decoder:
     """Decode WS-5000 UDP/HTTP payloads into a normalized dict (robust)."""
-    def __init__(self, params):
+
+    def __init__(self, params, ts_local_string):
         self.params = params
+        self.ts_local_string = ts_local_string
 
     # -------- parsing --------
     def _safe_text(self, raw: bytes) -> str:
         try:
-            return raw.decode('utf-8', errors='strict')
+            return raw.decode("utf-8", errors="strict")
         except UnicodeDecodeError:
-            return raw.decode('latin-1', errors='ignore')
+            return raw.decode("latin-1", errors="ignore")
 
     def _ascii_only(self, text: str) -> str:
         out = []
         for ch in text:
             o = ord(ch)
-            if 32 <= o <= 126 or ch in '\r\n\t':
+            if 32 <= o <= 126 or ch in "\r\n\t":
                 out.append(ch)
             else:
-                out.append(' ')
-        return ''.join(out)
+                out.append(" ")
+        return "".join(out)
 
     def _extract_candidate(self, text: str) -> str:
-        if '?' in text:
-            frag = text.split('?', 1)[1]
+        if "?" in text:
+            frag = text.split("?", 1)[1]
             frag = frag.splitlines()[0].strip()
-            if '=' in frag:
+            if "=" in frag:
                 return frag
         m = _QS_RUN_RE.search(text)
         if m:
             return m.group(1)
         first = text.splitlines()[0]
-        if '=' in first:
+        if "=" in first:
             return first.strip()
-        return ''
+        return ""
 
     def parse_fields(self, raw: bytes) -> Dict[str, str]:
         text = self._safe_text(raw)
         ascii_text = self._ascii_only(text)
         candidate = self._extract_candidate(ascii_text)
         if candidate:
-            norm = candidate.replace(';', '&').replace(',', '&')
-            if norm.startswith('/'):
+            norm = candidate.replace(";", "&").replace(",", "&")
+            if norm.startswith("/"):
                 norm = urlsplit(norm).query or norm
-            parsed = {k: v[-1] for k, v in parse_qs(norm, keep_blank_values=True).items()}
+            parsed = {
+                k: v[-1] for k, v in parse_qs(norm, keep_blank_values=True).items()
+            }
             if parsed:
                 return {k: unquote_plus(v) for k, v in parsed.items()}
         pairs = dict(_PAIR_RE.findall(ascii_text))
@@ -72,29 +77,39 @@ class WS5000Decoder:
     # -------- normalization helpers --------
     @staticmethod
     def _to_float(v: Optional[str]) -> Optional[float]:
-        if v is None: return None
+        if v is None:
+            return None
         try:
             s = v.strip()
-            if s in ('', 'NA', 'NAN', 'nan', 'null', 'None'): return None
+            if s in ("", "NA", "NAN", "nan", "null", "None"):
+                return None
             return float(s)
         except Exception:
             return None
 
     @staticmethod
     def _to_int(v: Optional[str]) -> Optional[int]:
-        if v is None: return None
+        if v is None:
+            return None
         try:
             s = v.strip()
-            if s in ('', 'NA', 'NAN', 'nan', 'null', 'None'): return None
+            if s in ("", "NA", "NAN", "nan", "null", "None"):
+                return None
             return int(float(s))
         except Exception:
             return None
 
     @staticmethod
     def _parse_dateutc(s: Optional[str]):
-        if not s: return None
+        if not s:
+            return None
         s = s.strip()
-        for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%SZ', '%m/%d/%Y %H:%M:%S', '%Y-%m-%d %H:%M'):
+        for fmt in (
+            "%Y-%m-%d %H:%M:%S",
+            "%Y-%m-%dT%H:%M:%SZ",
+            "%m/%d/%Y %H:%M:%S",
+            "%Y-%m-%d %H:%M",
+        ):
             try:
                 return datetime.strptime(s, fmt).replace(tzinfo=timezone.utc)
             except ValueError:
@@ -103,15 +118,29 @@ class WS5000Decoder:
             return datetime.fromtimestamp(float(s), tz=timezone.utc)
         except Exception:
             return None
-        
+
     def _degrees_to_compass(self, degrees):
         """
         Converts wind direction in degrees (0-360) to a 16-point compass direction.
         N is 0 degrees, E is 90 degrees, S is 180 degrees, W is 270 degrees.
         """
         directions = [
-            "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-            "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"
+            "N",
+            "NNE",
+            "NE",
+            "ENE",
+            "E",
+            "ESE",
+            "SE",
+            "SSE",
+            "S",
+            "SSW",
+            "SW",
+            "WSW",
+            "W",
+            "WNW",
+            "NW",
+            "NNW",
         ]
         # Adjust degrees to start N at the center of its range (348.75 to 11.25)
         # This shifts the degree range so N is centered around 0.
@@ -125,32 +154,34 @@ class WS5000Decoder:
 
     # -------- normalization --------
     def _normalize(self, fields: Dict[str, str]) -> Dict[str, Any]:
-        f = self._to_float(fields.get('tempf'))
-        c = self._to_float(fields.get('tempc'))
-        temp_c = c if c is not None else (None if f is None else (f - 32) * 5/9)
+        f = self._to_float(fields.get("tempf"))
+        c = self._to_float(fields.get("tempc"))
+        temp_c = c if c is not None else (None if f is None else (f - 32) * 5 / 9)
         temp_f = f if f is not None else None
 
         # Indoor temp aliases: Ambient uses 'tempinf' for indoor F
-        f = self._to_float(fields.get('indoortempf') or fields.get('tempinf'))
-        c = self._to_float(fields.get('indoortempc') or fields.get('tempinc'))
-        indoor_c = c if c is not None else (None if f is None else (f - 32) * 5/9)
+        f = self._to_float(fields.get("indoortempf") or fields.get("tempinf"))
+        c = self._to_float(fields.get("indoortempc") or fields.get("tempinc"))
+        indoor_c = c if c is not None else (None if f is None else (f - 32) * 5 / 9)
 
-        humidity = self._to_int(fields.get('humidity'))
+        humidity = self._to_int(fields.get("humidity"))
         # Indoor humidity alias: Ambient uses 'humidityin'
-        indoor_h = self._to_int(fields.get('indoorhumidity') or fields.get('humidityin'))
+        indoor_h = self._to_int(
+            fields.get("indoorhumidity") or fields.get("humidityin")
+        )
 
-        mph = self._to_float(fields.get('windspeedmph'))
+        mph = self._to_float(fields.get("windspeedmph"))
         wind_mps = mph * 0.44704 if mph is not None else None
         wind_mph = mph if mph is not None else None
-        mph_g = self._to_float(fields.get('windgustmph'))
+        mph_g = self._to_float(fields.get("windgustmph"))
         wind_gust_mps = mph_g * 0.44704 if mph_g is not None else None
         wind_gust_mph = mph_g if mph_g is not None else None
-        wind_dir = self._to_int(fields.get('winddir'))
+        wind_dir = self._to_int(fields.get("winddir"))
         if wind_dir is None:
             wind_dir = None
 
         pressure_hpa = None
-        for k in ('baromin', 'baromrelin', 'baromabsin'):
+        for k in ("baromin", "baromrelin", "baromabsin"):
             v = self._to_float(fields.get(k))
             if v is not None:
                 pressure_hpa = v * 33.8638866667
@@ -158,49 +189,56 @@ class WS5000Decoder:
 
         pressure_in_hg = pressure_hpa * 0.02952998 if pressure_hpa is not None else None
 
-        rr_in = self._to_float(fields.get('rainratein'))
+        rr_in = self._to_float(fields.get("rainratein"))
         rain_rate_in_hr = rr_in if rr_in is not None else 0
         rain_rate_mm_h = rr_in * 25.4 if rr_in is not None else None
-        dr_in = self._to_float(fields.get('dailyrainin')) or self._to_float(fields.get('eventrainin'))
+        dr_in = self._to_float(fields.get("dailyrainin")) or self._to_float(
+            fields.get("eventrainin")
+        )
         rain_daily_mm = dr_in * 25.4 if dr_in is not None else 0
         rain_daily_in = dr_in if dr_in is not None else 0
 
-        solar_wm2 = self._to_float(fields.get('solarradiation'))
-        uv_index  = self._to_float(fields.get('UV') or fields.get('uv'))
+        solar_wm2 = self._to_float(fields.get("solarradiation"))
+        uv_index = self._to_float(fields.get("UV") or fields.get("uv"))
 
-        pm25 = ( self._to_float(fields.get('pm2_5'))
-                 or self._to_float(fields.get('pm25'))
-                 or self._to_float(fields.get('pm25_ch1')) )
-        pm10 = ( self._to_float(fields.get('pm10'))
-                 or self._to_float(fields.get('pm10_ch1')) )
+        pm25 = (
+            self._to_float(fields.get("pm2_5"))
+            or self._to_float(fields.get("pm25"))
+            or self._to_float(fields.get("pm25_ch1"))
+        )
+        pm10 = self._to_float(fields.get("pm10")) or self._to_float(
+            fields.get("pm10_ch1")
+        )
 
         dt_utc = datetime.now(timezone.utc)
-        for k in ('dateutc', 'datetime', 'time_utc'):
+        for k in ("dateutc", "datetime", "time_utc"):
             if k in fields:
                 dt_utc = self._parse_dateutc(fields[k])
                 break
-        ts_utc = dt_utc.isoformat().replace('+00:00','Z') if dt_utc else None
-        tz_string = self.params.get('timezone')
-        tz = pytz.timezone(self.params["timezone"])
-        ts_local_time = dt_utc.astimezone(tz).isoformat() if (dt_utc and tz_string) else None
+        # ts_utc = dt_utc.isoformat().replace('+00:00','Z') if dt_utc else None
+        # tz_string = self.params.get('timezone')
+        # tz = pytz.timezone(self.params["timezone"])
+        ts_local_time = self.ts_local.string(
+            dt_utc
+        )  #  dt_utc.astimezone(tz).isoformat() if (dt_utc and tz_string) else None
 
         battery = None
-        for k in ('batt','battery','lowbatt','wh65batt','wh32batt'):
+        for k in ("batt", "battery", "lowbatt", "wh65batt", "wh32batt"):
             if k in fields:
-                b = (fields[k] or '').strip().lower()
-                battery = int(b) if b in ('0','1') else b
+                b = (fields[k] or "").strip().lower()
+                battery = int(b) if b in ("0", "1") else b
                 break
 
         return {
-            'timestamp_local': ts_local_time,
-            'temperature_F': int(temp_f),
-            'humidity_pct': int(humidity),
-            'wind_mph': int(wind_mph),
-            'wind_gust_mph': int(wind_gust_mph),
-            'wind_dir': self._degrees_to_compass(wind_dir),
-            'pressure_in_hg': f'{pressure_in_hg:.2f}',
-            'rain_rate_in_hr': f'{rain_rate_in_hr:.1f}',
-            'rain_daily_in': f'{rain_daily_in:.1f}',
-            'solar_wm2': solar_wm2,
-            'uv_index': int(uv_index),
+            "timestamp_local": ts_local_time,
+            "temperature_F": int(temp_f),
+            "humidity_pct": int(humidity),
+            "wind_mph": int(wind_mph),
+            "wind_gust_mph": int(wind_gust_mph),
+            "wind_dir": self._degrees_to_compass(wind_dir),
+            "pressure_in_hg": f"{pressure_in_hg:.2f}",
+            "rain_rate_in_hr": f"{rain_rate_in_hr:.1f}",
+            "rain_daily_in": f"{rain_daily_in:.1f}",
+            "solar_wm2": solar_wm2,
+            "uv_index": int(uv_index),
         }
