@@ -41,9 +41,7 @@ class Caltrans(SourceBase):
         new_count = 0
         for layer, url in endpoints.items():
             if layer_filter and not layer.startswith(layer_filter):
-                self.logger.debug(
-                    f"[CalTrans] skipping layer {layer} due to filter {layer_filter}"
-                )
+                self.logger.debug(f"[CalTrans] skipping layer {layer} due to filter {layer_filter}")
                 continue
             try:
                 xml_text = http_get(
@@ -72,16 +70,12 @@ class Caltrans(SourceBase):
                     soup = BeautifulSoup(item["description"], "html.parser")
                     if soup and isinstance(soup, Tag):
                         self.logger.debug(f"[CalTrans] sent {item['description']}\n")
-                        # (item['desc'], item["timestamp_local"])= self._parse_caltrans_soup(soup)
-                        (item["desc"], item["timestamp_local"]) = (
-                            self._extract_incident_from_soup(soup)
-                        )
+                        (item["desc"], local_dt) = self._extract_incident_from_soup(soup)
+                        item["timestamp_local"] = self.dt_local_str(local_dt)
                     else:
                         item["desc"] = unescape(item.get("description", ""))
                         item["timestamp_local"] = self.dt_local_str(self.now_dt())
-                    self.logger.debug(
-                        f"[CalTrans] {layer} we substituted: {item['desc']}\n"
-                    )
+                    self.logger.debug(f"[CalTrans] {layer} we substituted: {item['desc']}\n")
 
                     self.post_item(item)
                     new_count += 1
@@ -101,9 +95,7 @@ class Caltrans(SourceBase):
             acronym = match.group(0)
             return self.acronyms.get(acronym, acronym)
 
-        pattern = re.compile(
-            r"\b(" + "|".join(re.escape(k) for k in self.acronyms.keys()) + r")\b"
-        )
+        pattern = re.compile(r"\b(" + "|".join(re.escape(k) for k in self.acronyms.keys()) + r")\b")
         return pattern.sub(replace, text) if self.acronyms else text
 
     def _extract_incident_from_soup(self, soup):
@@ -111,14 +103,10 @@ class Caltrans(SourceBase):
         updated_p = soup.find("p", class_="update-stamp")
         if updated_p:
             raw = updated_p.get_text(strip=True)
-            m = re.search(
-                r"(\d{2}/\d{2}/\d{4}\s+\d{1,2}:\d{2}\s*[ap]m)", raw, flags=re.I
-            )
+            m = re.search(r"(\d{2}/\d{2}/\d{4}\s+\d{1,2}:\d{2}\s*[ap]m)", raw, flags=re.I)
             if m:
                 try:
-                    updated_dt = datetime.strptime(
-                        m.group(1).upper(), "%m/%d/%Y %I:%M%p"
-                    )
+                    updated_dt = datetime.strptime(m.group(1).upper(), "%m/%d/%Y %I:%M%p")
                 except ValueError:
                     updated_dt = None
 
@@ -169,15 +157,11 @@ class Caltrans(SourceBase):
             coord_text = None
             pt = pm.find("Point") or pm.find("{http://www.opengis.net/kml/2.2}Point")
             if pt is not None:
-                c = pt.find("coordinates") or pt.find(
-                    "{http://www.opengis.net/kml/2.2}coordinates"
-                )
+                c = pt.find("coordinates") or pt.find("{http://www.opengis.net/kml/2.2}coordinates")
                 coord_text = self._txt(c)
             if coord_text is None:
                 for tag in ("LineString", "Polygon"):
-                    g = pm.find(tag) or pm.find(
-                        f"{{http://www.opengis.net/kml/2.2}}{tag}"
-                    )
+                    g = pm.find(tag) or pm.find(f"{{http://www.opengis.net/kml/2.2}}{tag}")
                     if g is not None:
                         c = g.find("coordinates") or g.find(
                             "{http://www.opengis.net/kml/2.2}coordinates"
