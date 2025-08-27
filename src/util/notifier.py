@@ -86,7 +86,6 @@ class Notifier:
             return render_template(template, items[0])
         if len(items) == 1:
             return json.dumps(items[0], ensure_ascii=False, indent=2)
-        # return f"**{title}**\nReceived {len(items)} items at {dt.datetime.utcnow().isoformat()}Z."
         return (
             f"**{title}**\nReceived {len(items)} items at {self.base.now_local_str()}."
         )
@@ -143,14 +142,6 @@ class Notifier:
         return post_json(webhook_url, {"text": text})
 
     def _get_channel_id_by_name(self, channel_name, team_name, user_name):
-        # teams = (
-        #     self.mattermost_api.teams.get_teams()
-        # )  # user has to be a system admin to list teams
-        # team = next((team for team in teams if team["display_name"] == team_name), None)
-        # if team is None:
-        #     self.logger.warning(f"[Notifier] Team {team_name} not found.")
-        #     return
-        # team_id = team["id"]
         user_id = self.mattermost_api.users.get_user_by_username(user_name).get("id")
         teams = self.mattermost_api.teams.get_user_teams(user_id)
         team = next((team for team in teams if team["display_name"] == team_name), None)

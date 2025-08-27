@@ -107,7 +107,6 @@ class Caltrans(SourceBase):
         return pattern.sub(replace, text) if self.acronyms else text
 
     def _extract_incident_from_soup(self, soup):
-        # Parse update timestamp
         updated_dt = None
         updated_p = soup.find("p", class_="update-stamp")
         if updated_p:
