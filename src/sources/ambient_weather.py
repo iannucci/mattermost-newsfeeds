@@ -7,17 +7,26 @@ from util.ws5000_decode import WS5000Decoder
 from .base import SourceBase
 from util.notifier import Notifier
 
+
 class AmbientWeather(SourceBase):
-    def __init__(self, name: str, cfg: Dict[str, Any], general_cfg: Dict[str, Any], seen, logger, notifier: Notifier) -> None:
+    def __init__(
+        self,
+        name: str,
+        cfg: Dict[str, Any],
+        general_cfg: Dict[str, Any],
+        seen,
+        logger,
+        notifier: Notifier,
+    ) -> None:
         super().__init__(name, cfg, general_cfg, seen, logger, notifier)
         self.handler = Handler(self.cfg, logger)
         self.handler.start()
-        self.decoder = WS5000Decoder(self.params, self.ts_local_string)
+        self.decoder = WS5000Decoder(self.params, self.ts_local_string())
 
     def _pretty(self) -> bool:
-        mode = str(self.cfg.get('mode', 'http')).lower()
+        mode = str(self.cfg.get("mode", "http")).lower()
         section = self.cfg.get(mode, {}) if isinstance(self.cfg, dict) else {}
-        return bool(section.get('pretty', False))
+        return bool(section.get("pretty", False))
 
     def poll(self, now_ts: float) -> int:
         """Drain queued messages.  For the most recent, decode to dict
@@ -34,16 +43,18 @@ class AmbientWeather(SourceBase):
                 last_msg = msg
                 processed += 1
         if last_msg:
-            if last_msg.get('type') == 'http':
-                fields = last_msg.get('fields', {})
+            if last_msg.get("type") == "http":
+                fields = last_msg.get("fields", {})
                 item = self.decoder.normalize_fields(fields)
                 self.post_item(item)
                 sys.stdout.flush()
-            elif last_msg.get('type') == 'udp':
-                payload = last_msg.get('payload', b'')
+            elif last_msg.get("type") == "udp":
+                payload = last_msg.get("payload", b"")
                 rec = self.decoder.decode(payload)
-                rec['_transport'] = last_msg.get('transport', {})
-                self.logger.debug(json.dumps(rec, indent=2 if pretty else None, ensure_ascii=False))
+                rec["_transport"] = last_msg.get("transport", {})
+                self.logger.debug(
+                    json.dumps(rec, indent=2 if pretty else None, ensure_ascii=False)
+                )
                 sys.stdout.flush()
             else:
                 pass

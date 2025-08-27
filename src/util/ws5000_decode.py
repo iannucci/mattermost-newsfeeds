@@ -218,7 +218,7 @@ class WS5000Decoder:
         # ts_utc = dt_utc.isoformat().replace('+00:00','Z') if dt_utc else None
         # tz_string = self.params.get('timezone')
         # tz = pytz.timezone(self.params["timezone"])
-        ts_local_time = self.ts_local.string(
+        ts_local_time = self.ts_local_string(
             dt_utc
         )  #  dt_utc.astimezone(tz).isoformat() if (dt_utc and tz_string) else None
 
