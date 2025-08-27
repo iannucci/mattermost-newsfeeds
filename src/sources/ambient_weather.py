@@ -21,7 +21,7 @@ class AmbientWeather(SourceBase):
         super().__init__(name, cfg, general_cfg, seen, logger, notifier)
         self.handler = Handler(self.cfg, logger)
         self.handler.start()
-        self.decoder = WS5000Decoder(self.params, self.ts_local_string())
+        self.decoder = WS5000Decoder(self.params, self.ts_local_string)
 
     def _pretty(self) -> bool:
         mode = str(self.cfg.get("mode", "http")).lower()
