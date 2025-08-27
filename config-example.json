@@ -1,23 +1,27 @@
 {
   "general": {
     "program_name": "mattermost-newsfeeds",
-    "user_agent": "mattermost-newsfeeds/3.0 (mailto:bob@rail.com)",
+    "user_agent": "mattermost-newsfeeds/3.0 (mailto:XXXX@YYYY.ZZZ)",
     "dry_run": false,
     "seen_store_path": "state/seen.json",
     "seen_ttl_days": 7,
     "location": {
       "lat": LATITUDE,
-      "lon": LONGITUDE
+      "lon": LONGITUDE_WEST_IS_NEGATIVE
     },
+    "timezone": "America/Los_Angeles",
     "log_level": "INFO",
+    "log_time_format": "%H:%M:%S %a %b %d, %Y",
     "sleep_min": 1,
     "sleep_max": 5,
     "mattermost": {
-      "host": "MATTERMOST-SERVER",
-      "token": "XXXXXXXXXXXXXXXXX",
+      "host": "AAAAA.BBBBB.CCC",
+      "token": "xxxxxxxxxxxxxxxxxxxxxx",
       "scheme": "http",
       "port": 80,
-      "basepath": "/api/v4"
+      "basepath": "/api/v4",
+      "team": "TTTTTTTTTTTTTTT",
+      "user": "UUUUUUUU"
     }
   },
   "sources": [
@@ -32,20 +36,11 @@
       },
       "template": "**[NWS] {event}** \u2014 {headline}\n_effective:_ {effective}  _expires:_ {expires}",
       "notifier": {
-        "type": "bot",
+        "type": "mattermost",
         "stream": true,
         "style": "markdown",
-        "thread_root_id": "",
-        "batch_threshold": 10,
         "webhook_url": "",
-        "scheme": "http",
-        "host": "MATTERMOST-SERVER",
-        "port": 80,
-        "basepath": "/api/v4",
-        "team": "TEAM",
-        "channel": "National Weather Service",
-        "user": "USER",
-        "token": "XXXXXXXXXXXXXXXXX"
+        "channel": "National Weather Service"
       }
     },
     {
@@ -56,25 +51,15 @@
       "poll_seconds": 60,
       "params": {
         "feed_url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",
-        "max_mi": 100.0,
-        "timezone": "America/Los_Angeles"
+        "max_mi": 100.0
       },
       "template": "**[USGS]** Earthquake M{mag} at {timestamp_local} \u2014 {place} ({distance_mi_from_origin} mi)\n{url}",
       "notifier": {
-        "type": "bot",
+        "type": "mattermost",
         "stream": true,
         "style": "markdown",
-        "thread_root_id": "",
-        "batch_threshold": 10,
         "webhook_url": "",
-        "scheme": "http",
-        "host": "MATTERMOST-SERVER",
-        "port": 80,
-        "basepath": "/api/v4",
-        "team": "TEAM",
-        "channel": "US Geological Survey",
-        "user": "USER",
-        "token": "XXXXXXXXXXXXXXXXX"
+        "channel": "US Geological Survey"
       }
     },
     {
@@ -85,7 +70,6 @@
       "poll_seconds": 60,
       "params": {
         "max_mi": 10.0,
-        "timezone": "America/Los_Angeles",
         "endpoints": {
           "lane_closures": "https://quickmap.dot.ca.gov/data/lcs2way.kml",
           "chp_incidents": "https://quickmap.dot.ca.gov/data/chp-only.kml",
@@ -96,20 +80,11 @@
       },
       "template": "**[CalTrans]** \u2014 {name} at {timestamp_local} ({distance_mi} mi)\n{desc}",
       "notifier": {
-        "type": "bot",
+        "type": "mattermost",
         "stream": true,
         "style": "markdown",
-        "thread_root_id": "",
-        "batch_threshold": 10,
         "webhook_url": "",
-        "scheme": "http",
-        "host": "MATTERMOST-SERVER",
-        "port": 80,
-        "basepath": "/api/v4",
-        "team": "TEAM",
-        "channel": "CalTrans",
-        "user": "USER",
-        "token": "XXXXXXXXXXXXXXXXX"
+        "channel": "CalTrans"
       },
       "acronyms": {
         "ABV": "above",
@@ -132,6 +107,7 @@
         "CLEANUP": "clean up",
         "CLEARED": "cleared",
         "COND": "conditions",
+        "CON": "connector",
         "CONSTR": "construction",
         "CVC": "California Vehicle Code",
         "DAM": "damage",
@@ -188,6 +164,7 @@
         "OCCRD": "occurred",
         "Ofr": "Off ramp",
         "OFR": "off ramp",
+        "OOG": "out of gas",
         "Onr": "On ramp",
         "ONR": "on ramp",
         "ORN": "orange",
@@ -239,20 +216,11 @@
       },
       "template": "**[PAO]** \u2014 {title}\n{link}",
       "notifier": {
-        "type": "bot",
+        "type": "mattermost",
         "stream": true,
         "style": "markdown",
-        "thread_root_id": "",
-        "batch_threshold": 10,
         "webhook_url": "",
-        "scheme": "http",
-        "host": "MATTERMOST-SERVER",
-        "port": 80,
-        "basepath": "/api/v4",
-        "team": "TEAM",
-        "channel": "Palo Alto Online",
-        "user": "USER",
-        "token": "XXXXXXXXXXXXXXXXX"
+        "channel": "Palo Alto Online"
       }
     },
     {
@@ -268,31 +236,21 @@
       },
       "template": "**PulsePoint** \u2014 Palo Alto FD\nRespond: {respond_url}\nRadio: {broadcastify}",
       "notifier": {
-        "type": "bot",
+        "type": "mattermost",
         "stream": true,
         "style": "markdown",
-        "thread_root_id": "",
-        "batch_threshold": 10,
         "webhook_url": "",
-        "scheme": "http",
-        "host": "MATTERMOST-SERVER",
-        "port": 80,
-        "basepath": "/api/v4",
-        "team": "TEAM",
-        "channel": "PulsePoint",
-        "user": "USER",
-        "token": "XXXXXXXXXXXXXXXXX"
+        "channel": "PulsePoint"
       }
     },
     {
       "name": "AmbientWeather",
-      "enabled": false,
+      "enabled": true,
       "module": "sources.ambient_weather",
       "class": "AmbientWeather",
       "poll_seconds": 600,
       "mode": "http",
       "params": {
-        "timezone": "America/Los_Angeles",
         "http": {
           "host": "0.0.0.0",
           "port": 46000,
@@ -309,20 +267,11 @@
       },
       "template": "**[AmbientWeather]** \u2014 Local conditions at {timestamp_local}:\n  Temp {temperature_F}\u00b0F\n  Winds from the {wind_dir} at {wind_mph}, gusting to {wind_gust_mph} mph\n  Humidity {humidity_pct}%\n  Pressure {pressure_in_hg} in Hg\n  UV index {uv_index}\n  Rain rate {rain_rate_in_hr} in/h, daily {rain_daily_in} in",
       "notifier": {
-        "type": "bot",
+        "type": "mattermost",
         "stream": true,
         "style": "markdown",
-        "thread_root_id": "",
-        "batch_threshold": 10,
         "webhook_url": "",
-        "scheme": "http",
-        "host": "MATTERMOST-SERVER",
-        "port": 80,
-        "basepath": "/api/v4",
-        "team": "TEAM",
-        "channel": "Local Weather",
-        "user": "USER",
-        "token": "XXXXXXXXXXXXXXXXX"
+        "channel": "Local Weather"
       }
     }
   ]
