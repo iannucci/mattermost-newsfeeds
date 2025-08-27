@@ -78,7 +78,7 @@ class Caltrans(SourceBase):
                         )
                     else:
                         item["desc"] = unescape(item.get("description", ""))
-                        item["timestamp_local"] = self.ts_local_str(self.now_ts())
+                        item["timestamp_local"] = self.dt_local_str(self.now_dt())
                     self.logger.debug(
                         f"[CalTrans] {layer} we substituted: {item['desc']}\n"
                     )

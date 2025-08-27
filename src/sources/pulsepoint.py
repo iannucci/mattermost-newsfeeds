@@ -1,8 +1,21 @@
 from .base import SourceBase
+from typing import Dict, Any
+from util.notifier import Notifier
 
 
 class PulsePoint(SourceBase):
-    bucket = "pulsepoint"
+
+    def __init__(
+        self,
+        name: str,
+        cfg: Dict[str, Any],
+        general_cfg: Dict[str, Any],
+        seen,
+        logger,
+        notifier: Notifier,
+    ) -> None:
+        super().__init__(name, cfg, general_cfg, seen, logger, notifier)
+        self.bucket = "pulsepoint"
 
     def poll(self, now_ts: float) -> int:
         agency = self.params.get("agency_id", "43070")

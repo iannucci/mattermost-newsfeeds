@@ -1,7 +1,6 @@
 # ambient_weather.py (v2, package-style)
 from typing import Dict, Any
 import json, sys
-
 from util.ws5000_handler import Handler
 from util.ws5000_decode import WS5000Decoder
 from .base import SourceBase
@@ -21,7 +20,7 @@ class AmbientWeather(SourceBase):
         super().__init__(name, cfg, general_cfg, seen, logger, notifier)
         self.handler = Handler(self.cfg, logger)
         self.handler.start()
-        self.decoder = WS5000Decoder(self.params, self.ts_local_string)
+        self.decoder = WS5000Decoder(self.params, self.dt_local_str)
 
     def _pretty(self) -> bool:
         mode = str(self.cfg.get("mode", "http")).lower()

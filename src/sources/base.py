@@ -72,14 +72,18 @@ class SourceBase:
     def poll(self, now_ts: float) -> int:
         raise NotImplementedError
 
-    def now_ts(self):
+    # Now as a datetime object
+    def now_dt(self):
         return datetime.now()
 
+    # Uniz timestamp to datetime object
     def unix_to_dt(self, unix):
         return datetime.fromtimestamp(unix)
 
-    def timezone(self):
+    # Timezone as a string
+    def timezone_str(self):
         return self.params.get("timezone", "America/Los_Angeles")
 
-    def ts_local_string(self, ts):
-        return datetime.astimezone(self.timezone).strftime(self.log_time_format)
+    # Datetime to string in local timezone
+    def dt_local_str(self, dt):
+        return dt.astimezone(self.timezone).strftime(self.log_time_format)

@@ -1,9 +1,22 @@
 from util.http import http_get
 from .base import SourceBase
+from typing import Dict, Any
+from util.notifier import Notifier
 
 
 class NWS(SourceBase):
-    bucket = "nws"
+
+    def __init__(
+        self,
+        name: str,
+        cfg: Dict[str, Any],
+        general_cfg: Dict[str, Any],
+        seen,
+        logger,
+        notifier: Notifier,
+    ) -> None:
+        super().__init__(name, cfg, general_cfg, seen, logger, notifier)
+        self.bucket = "nws"
 
     def poll(self, now_ts: float) -> int:
         api = self.params.get("api_url", "https://api.weather.gov/alerts/active")

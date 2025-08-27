@@ -1,10 +1,23 @@
 from bs4 import BeautifulSoup
 from util.http import http_get
 from .base import SourceBase
+from typing import Dict, Any
+from util.notifier import Notifier
 
 
 class PAO(SourceBase):
-    bucket = "pao"
+
+    def __init__(
+        self,
+        name: str,
+        cfg: Dict[str, Any],
+        general_cfg: Dict[str, Any],
+        seen,
+        logger,
+        notifier: Notifier,
+    ) -> None:
+        super().__init__(name, cfg, general_cfg, seen, logger, notifier)
+        self.bucket = "pao"
 
     def poll(self, now_ts: float) -> int:
         url = self.params.get("news_url", "https://www.paloaltoonline.com/news/")

@@ -72,6 +72,9 @@ class Notifier:
                 self.mattermost_channel, self.mattermost_team, self.mattermost_user
             )
         else:
+            self.logger.warning(
+                f"[Notifier] During initialization, mattermost_channel was undefined"
+            )
             self.mattermost_channel_id = None
 
     def _compose_text(
@@ -121,7 +124,7 @@ class Notifier:
         #     }
         # }
 
-        body = {"channel_id": self.channel_id, "message": text}
+        body = {"channel_id": self.mattermost_channel_id, "message": text}
 
         return self.mattermost_api.posts.create_post(body)
 

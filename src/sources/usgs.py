@@ -1,11 +1,24 @@
 from util.http import http_get
 from .base import SourceBase, km_between
+from typing import Dict, Any
+from util.notifier import Notifier
 
 # from datetime import datetime, timezone
 
 
 class USGS(SourceBase):
-    bucket = "usgs"
+
+    def __init__(
+        self,
+        name: str,
+        cfg: Dict[str, Any],
+        general_cfg: Dict[str, Any],
+        seen,
+        logger,
+        notifier: Notifier,
+    ) -> None:
+        super().__init__(name, cfg, general_cfg, seen, logger, notifier)
+        self.bucket = "usgs"
 
     def poll(self, now_ts: float) -> int:
         feed = self.params.get(
@@ -38,9 +51,7 @@ class USGS(SourceBase):
                 props.get("time", 0) / 1000
             )  # time is of format 1756070780800
             dt = self.unix_to_dt(unix_ts)
-            timestamp_local = (
-                self.ts_local_string
-            )  # datetime.astimezone(self.timezone).isoformat()
+            timestamp_local = self.dt_local_str(dt)
 
             item = {
                 "id": f.get("id"),

@@ -12,9 +12,9 @@ _PAIR_RE = re.compile(r"([A-Za-z0-9_]+)\s*=\s*([^&;,\s]+)")
 class WS5000Decoder:
     """Decode WS-5000 UDP/HTTP payloads into a normalized dict (robust)."""
 
-    def __init__(self, params, ts_local_string):
+    def __init__(self, params, dt_local_str):
         self.params = params
-        self.ts_local_string = ts_local_string
+        self.dt_local_str = dt_local_str
 
     # -------- parsing --------
     def _safe_text(self, raw: bytes) -> str:
@@ -215,12 +215,7 @@ class WS5000Decoder:
             if k in fields:
                 dt_utc = self._parse_dateutc(fields[k])
                 break
-        # ts_utc = dt_utc.isoformat().replace('+00:00','Z') if dt_utc else None
-        # tz_string = self.params.get('timezone')
-        # tz = pytz.timezone(self.params["timezone"])
-        ts_local_time = self.ts_local_string(
-            dt_utc
-        )  #  dt_utc.astimezone(tz).isoformat() if (dt_utc and tz_string) else None
+        ts_local_time = self.dt_local_str(dt_utc)
 
         battery = None
         for k in ("batt", "battery", "lowbatt", "wh65batt", "wh32batt"):
