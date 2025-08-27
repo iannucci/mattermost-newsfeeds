@@ -19,7 +19,7 @@ def load_sources(cfg, logger, seen, mattermost_api):
         if not source_config.get("enabled", True):
             continue
         notifier = Notifier(
-            general, source_config.get("notifier_params", {}), mattermost_api, logger
+            general, source_config.get("notifier", {}), mattermost_api, logger
         )
         mod = importlib.import_module(source_config["module"])
         cls = getattr(mod, source_config["class"])

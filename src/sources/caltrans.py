@@ -1,5 +1,4 @@
 import xml.etree.ElementTree as ET
-from html import unescape as _html_unescape
 from util.http import http_get
 from .base import SourceBase, km_between
 from typing import Dict, Any
@@ -79,13 +78,7 @@ class Caltrans(SourceBase):
                         )
                     else:
                         item["desc"] = unescape(item.get("description", ""))
-                        item["timestamp_local"] = self.ts_local_str(
-                            self.now_ts()
-                        )  # datetime.now().isoformat()
-
-                    # item['desc']=self._de_acronymize(item['desc'])
-
-                    # <debug>
+                        item["timestamp_local"] = self.ts_local_str(self.now_ts())
                     self.logger.debug(
                         f"[CalTrans] {layer} we substituted: {item['desc']}\n"
                     )

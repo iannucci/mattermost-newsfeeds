@@ -49,22 +49,22 @@ class Notifier:
     def __init__(
         self,
         general_cfg: Dict[str, Any],
-        cfg: Dict[str, Any],
+        notifier_cfg: Dict[str, Any],
         mattermost_api: Driver,
         logger,
     ):
-        self.cfg = cfg
+        self.notifier_cfg = notifier_cfg
         self.general_cfg = general_cfg
         self.mattermost_api = mattermost_api
         self.logger = logger
         self.mattermost_cfg = general_cfg.get("mattermost", {})
-        self.mattermost_channel = self.cfg.get("channel", "")
+        self.mattermost_channel = notifier_cfg.get("channel", "")
         self.mattermost_team = self.mattermost_cfg.get("team", "")
         self.mattermost_user = self.mattermost_cfg.get("user", "")
-        self.type = (cfg.get("type") or "webhook").lower()
-        self.stream = bool(cfg.get("stream", True))
-        self.style = (cfg.get("style") or "markdown").lower()
-        self.webhook_url = cfg.get("webhook_url", "")
+        self.type = (notifier_cfg.get("type") or "webhook").lower()
+        self.stream = bool(notifier_cfg.get("stream", True))
+        self.style = (notifier_cfg.get("style") or "markdown").lower()
+        self.webhook_url = notifier_cfg.get("webhook_url", "")
         self.channel_id = None
         self.base = None
         if self.mattermost_channel != "":
@@ -73,10 +73,6 @@ class Notifier:
             )
         else:
             self.mattermost_channel_id = None
-
-    # def _base(self):
-    #     port = f":{self.port}" if self.port and self.port not in (80,443) else ""
-    #     return f"{self.scheme}://{self.host}{port}".rstrip('/')
 
     def _compose_text(
         self, title: str, items: List[Dict[str, Any]], template: Optional[str]
@@ -144,13 +140,23 @@ class Notifier:
         return post_json(webhook_url, {"text": text})
 
     def _get_channel_id_by_name(self, channel_name, team_name, user_name):
-        teams = self.mattermost_api.teams.get_teams()
+        # teams = (
+        #     self.mattermost_api.teams.get_teams()
+        # )  # user has to be a system admin to list teams
+        # team = next((team for team in teams if team["display_name"] == team_name), None)
+        # if team is None:
+        #     self.logger.warning(f"[Notifier] Team {team_name} not found.")
+        #     return
+        # team_id = team["id"]
+        user_id = self.mattermost_api.users.get_user_by_username(user_name).get("id")
+        teams = self.mattermost_api.teams.get_user_teams(user_id)
         team = next((team for team in teams if team["display_name"] == team_name), None)
         if team is None:
-            self.logger.warning(f"[Notifier] Team {team_name} not found.")
+            self.logger.warning(
+                f"[Notifier] Team {team_name} not found for user {user_name}."
+            )
             return
         team_id = team["id"]
-        user_id = self.mattermost_api.users.get_user_by_username(user_name).get("id")
         channels = self.mattermost_api.channels.get_channels_for_user(user_id, team_id)
         if not channels:
             self.logger.warning(f"[Notifier] No channels found for team {team_name}.")
