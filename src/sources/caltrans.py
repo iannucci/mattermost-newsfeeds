@@ -71,7 +71,7 @@ class Caltrans(SourceBase):
                     if soup and isinstance(soup, Tag):
                         self.logger.debug(f"[CalTrans] sent {item['description']}\n")
                         (item["desc"], local_dt) = self._extract_incident_from_soup(soup)
-                        item["timestamp_local"] = self.dt_utc_to_local_str(local_dt)
+                        item["timestamp_local"] = self.dt_str(local_dt)
                     else:
                         item["desc"] = unescape(item.get("description", ""))
                         item["timestamp_local"] = self.dt_str(self.now_dt())
