@@ -20,7 +20,7 @@ class AmbientWeather(SourceBase):
         super().__init__(name, cfg, general_cfg, seen, logger, notifier)
         self.handler = Handler(self.cfg, logger)
         self.handler.start()
-        self.decoder = WS5000Decoder(self.params, self.dt_local_str)
+        self.decoder = WS5000Decoder(self.params, self.dt_utc_to_local_str)
 
     def _pretty(self) -> bool:
         mode = str(self.cfg.get("mode", "http")).lower()
@@ -51,9 +51,7 @@ class AmbientWeather(SourceBase):
                 payload = last_msg.get("payload", b"")
                 rec = self.decoder.decode(payload)
                 rec["_transport"] = last_msg.get("transport", {})
-                self.logger.debug(
-                    json.dumps(rec, indent=2 if pretty else None, ensure_ascii=False)
-                )
+                self.logger.debug(json.dumps(rec, indent=2 if pretty else None, ensure_ascii=False))
                 sys.stdout.flush()
             else:
                 pass

@@ -85,5 +85,9 @@ class SourceBase:
         return self.params.get("timezone", "America/Los_Angeles")
 
     # Datetime to string in local timezone
-    def dt_local_str(self, dt):
+    def dt_utc_to_local_str(self, dt):
         return dt.astimezone(self.timezone).strftime(self.log_time_format)
+
+    # Datetime to string with no forced timezone interpretation
+    def dt_str(self, dt):
+        return dt.strftime(self.log_time_format)

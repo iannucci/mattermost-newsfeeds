@@ -28,9 +28,7 @@ class USGS(SourceBase):
         lat0 = self.general_cfg["location"]["lat"]
         lon0 = self.general_cfg["location"]["lon"]
         max_mi = float(self.params.get("max_mi", 100.0))
-        data = http_get(
-            feed, headers={"User-Agent": self.general_cfg.get("user_agent", "")}
-        ).json()
+        data = http_get(feed, headers={"User-Agent": self.general_cfg.get("user_agent", "")}).json()
         feats = data.get("features", [])
         new_count = 0
         for f in feats:
@@ -47,11 +45,9 @@ class USGS(SourceBase):
             self.logger.debug(f"[USGS] Earthquake data: {f}")
             self.logger.debug(f'[USGS] Time: {props.get("time")}')
 
-            unix_ts = int(
-                props.get("time", 0) / 1000
-            )  # time is of format 1756070780800
+            unix_ts = int(props.get("time", 0) / 1000)  # time is of format 1756070780800
             dt = self.unix_to_dt(unix_ts)
-            timestamp_local = self.dt_local_str(dt)
+            timestamp_local = self.dt_utc_to_local_str(dt)
 
             item = {
                 "id": f.get("id"),
