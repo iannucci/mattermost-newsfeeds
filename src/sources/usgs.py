@@ -25,6 +25,7 @@ class USGS(SourceBase):
             "feed_url",
             "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",
         )
+        min_magnitude = self.params.get("ignore_magnitude_below", 1.0)
         lat0 = self.general_cfg["location"]["lat"]
         lon0 = self.general_cfg["location"]["lon"]
         max_mi = float(self.params.get("max_mi", 100.0))
@@ -44,6 +45,12 @@ class USGS(SourceBase):
 
             self.logger.debug(f"[USGS] Earthquake data: {f}")
             self.logger.debug(f'[USGS] Time: {props.get("time")}')
+
+            magnitude = float(props.get("mag"))
+            if magnitude < min_magnitude:
+                self.logger.info(
+                    f"[USGS] Skipping earthquake report because magnitude {magnitude} is less than the min magnitude {min_magnitude}"
+                )
 
             unix_ts = int(props.get("time", 0) / 1000)  # time is of format 1756070780800
             dt = self.unix_to_dt(unix_ts)
