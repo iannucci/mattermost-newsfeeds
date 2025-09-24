@@ -51,6 +51,7 @@ class USGS(SourceBase):
                 self.logger.info(
                     f"[USGS] Skipping earthquake report because magnitude {magnitude} is less than the min magnitude {min_magnitude}"
                 )
+                continue
 
             unix_ts = int(props.get("time", 0) / 1000)  # time is of format 1756070780800
             dt = self.unix_to_dt(unix_ts)
