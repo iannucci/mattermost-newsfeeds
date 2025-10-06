@@ -275,32 +275,38 @@ class MattermostAPI:
 #     "w6ei", "National Weather Service", "Palo Alto ESV", age_threshold_seconds=HOUR * 12
 # )
 
-file_path = "config.json"
-config = {}
-logger = build_logger(logging.INFO, "mattermost_api")
 
-try:
-    with open(file_path, "r") as f:
-        config = json.load(f)
-    logger.info("[mattermost_api] Configuration data loaded successfully")
-except FileNotFoundError:
-    logger.info(f"[mattermost_api] Error: The file '{file_path}' was not found.")
-except json.JSONDecodeError:
-    logger.info(
-        f"[mattermost_api] Error: Could not decode JSON from '{file_path}'. Check file format."
+def main():
+    file_path = "config.json"
+    config = {}
+    logger = build_logger(logging.INFO, "mattermost_api")
+
+    try:
+        with open(file_path, "r") as f:
+            config = json.load(f)
+        logger.info("[mattermost_api] Configuration data loaded successfully")
+    except FileNotFoundError:
+        logger.info(f"[mattermost_api] Error: The file '{file_path}' was not found.")
+    except json.JSONDecodeError:
+        logger.info(
+            f"[mattermost_api] Error: Could not decode JSON from '{file_path}'. Check file format."
+        )
+    except Exception as e:
+        logger.info(f"[mattermost_api] An unexpected error occurred: {e}")
+
+    general_config = config.get("general", {})
+    mattermost_config = general_config.get("mattermost", {})
+    url = mattermost_config["host"]
+    token = mattermost_config["token"]
+    scheme = mattermost_config["scheme"]
+    port = mattermost_config["port"]
+    basepath = mattermost_config["basepath"]
+
+    api = MattermostAPI(url, token, scheme, port, basepath, logger)
+    api.delete_messages_in_channel(
+        "w6ei", "Local Weather", "Palo Alto ESV", age_threshold_seconds=HOUR * 3
     )
-except Exception as e:
-    logger.info(f"[mattermost_api] An unexpected error occurred: {e}")
 
-general_config = config.get("general", {})
-mattermost_config = general_config.get("mattermost", {})
-url = mattermost_config["host"]
-token = mattermost_config["token"]
-scheme = mattermost_config["scheme"]
-port = mattermost_config["port"]
-basepath = mattermost_config["basepath"]
 
-api = MattermostAPI(url, token, scheme, port, basepath, logger)
-api.delete_messages_in_channel(
-    "w6ei", "Local Weather", "Palo Alto ESV", age_threshold_seconds=HOUR * 3
-)
+if __name__ == "__main__":
+    main()
