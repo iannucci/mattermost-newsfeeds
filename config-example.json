@@ -209,25 +209,6 @@
       }
     },
     {
-      "name": "PAO",
-      "enabled": false,
-      "module": "sources.pao",
-      "class": "PAO",
-      "poll_seconds": 600,
-      "params": {
-        "news_url": "https://www.paloaltoonline.com/news/",
-        "max_items": 15
-      },
-      "template": "**[PAO]** \u2014 {title}\n{link}",
-      "notifier": {
-        "type": "mattermost",
-        "stream": true,
-        "style": "markdown",
-        "webhook_url": "",
-        "channel": "Palo Alto Online"
-      }
-    },
-    {
       "name": "PulsePoint",
       "enabled": false,
       "module": "sources.pulsepoint",
@@ -248,7 +229,7 @@
       }
     },
     {
-      "name": "AmbientWeather",
+      "name": "Ambient Weather",
       "enabled": true,
       "module": "sources.ambient_weather",
       "class": "AmbientWeather",
@@ -277,6 +258,45 @@
         "webhook_url": "",
         "channel": "Local Weather"
       }
+    },
+    {
+      "name": "Cleanup",
+      "enabled": true,
+      "module": "sources.cleanup",
+      "class": "CleanUp",
+      "poll_seconds": 3600,
+      "targets": [
+        {
+          "channel": "National Weather Service",
+          "admin_user": "xxx",
+          "board": "yyyy",
+          "threshold_minutes": 720
+        },
+        {
+          "channel": "US Geological Survey",
+          "admin_user": "xxx",
+          "board": "Palo Alto ESV",
+          "threshold_minutes": 720
+        },
+        {
+          "channel": "CalTrans",
+          "admin_user": "xxx",
+          "board": "Palo Alto ESV",
+          "threshold_minutes": 180
+        },
+        {
+          "channel": "PulsePoint",
+          "admin_user": "xxx",
+          "board": "Palo Alto ESV",
+          "threshold_minutes": 10080
+        },
+        {
+          "channel": "Local Weather",
+          "admin_user": "xxx",
+          "board": "yyyy",
+          "threshold_minutes": 180
+        }
+      ]
     }
   ]
 }
