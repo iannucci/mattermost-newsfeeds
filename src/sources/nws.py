@@ -9,13 +9,13 @@ class NWS(SourceBase):
     def __init__(
         self,
         name: str,
-        cfg: Dict[str, Any],
         general_cfg: Dict[str, Any],
+        cfg: Dict[str, Any],
         seen,
         logger,
         notifier: Notifier,
     ) -> None:
-        super().__init__(name, cfg, general_cfg, seen, logger, notifier)
+        super().__init__(name, general_cfg, cfg, seen, logger, notifier)
         self.bucket = "nws"
 
     def poll(self, now_ts: float) -> int:

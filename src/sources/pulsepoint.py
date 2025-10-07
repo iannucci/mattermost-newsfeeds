@@ -8,23 +8,19 @@ class PulsePoint(SourceBase):
     def __init__(
         self,
         name: str,
-        cfg: Dict[str, Any],
         general_cfg: Dict[str, Any],
+        cfg: Dict[str, Any],
         seen,
         logger,
         notifier: Notifier,
     ) -> None:
-        super().__init__(name, cfg, general_cfg, seen, logger, notifier)
+        super().__init__(name, general_cfg, cfg, seen, logger, notifier)
         self.bucket = "pulsepoint"
 
     def poll(self, now_ts: float) -> int:
         agency = self.params.get("agency_id", "43070")
-        resp = self.params.get(
-            "respond_url", f"https://web.pulsepoint.org/?agencies={agency}"
-        )
-        bcast = self.params.get(
-            "broadcastify", "https://www.broadcastify.com/listen/feed/34259"
-        )
+        resp = self.params.get("respond_url", f"https://web.pulsepoint.org/?agencies={agency}")
+        bcast = self.params.get("broadcastify", "https://www.broadcastify.com/listen/feed/34259")
         item = {"agency_id": agency, "respond_url": resp, "broadcastify": bcast}
         fp = f"{self.bucket}|{agency}"
         if not self.seen.is_seen(self.bucket, fp):

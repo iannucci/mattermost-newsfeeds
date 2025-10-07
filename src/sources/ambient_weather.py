@@ -8,16 +8,17 @@ from util.notifier import Notifier
 
 
 class AmbientWeather(SourceBase):
+
     def __init__(
         self,
         name: str,
-        cfg: Dict[str, Any],
         general_cfg: Dict[str, Any],
+        cfg: Dict[str, Any],
         seen,
         logger,
         notifier: Notifier,
     ) -> None:
-        super().__init__(name, cfg, general_cfg, seen, logger, notifier)
+        super().__init__(name, general_cfg, cfg, seen, logger, notifier)
         self.handler = Handler(self.cfg, logger)
         self.handler.start()
         self.decoder = WS5000Decoder(self.params, self.dt_utc_to_local_str)

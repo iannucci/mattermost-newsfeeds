@@ -9,13 +9,13 @@ class CleanUp(SourceBase):
     def __init__(
         self,
         name: str,
-        cleanup_config: Dict[str, Any],
         general_config: Dict[str, Any],
+        cleanup_config: Dict[str, Any],
         seen,
         logger,
         notifier: Notifier,
     ) -> None:
-        super().__init__(name, cleanup_config, general_config, seen, logger, notifier)
+        super().__init__(name, general_config, cleanup_config, seen, logger, notifier)
         self.bucket = "cleanup"
         self.cleanup_config = cleanup_config
         self.general_config = general_config

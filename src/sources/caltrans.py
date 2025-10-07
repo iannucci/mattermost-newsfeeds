@@ -18,13 +18,13 @@ class Caltrans(SourceBase):
     def __init__(
         self,
         name: str,
-        cfg: Dict[str, Any],
         general_cfg: Dict[str, Any],
+        cfg: Dict[str, Any],
         seen,
         logger,
         notifier: Notifier,
     ) -> None:
-        super().__init__(name, cfg, general_cfg, seen, logger, notifier)
+        super().__init__(name, general_cfg, cfg, seen, logger, notifier)
         self.bucket = "caltrans"
         self.acronyms = cfg.get("acronyms", {})
 
