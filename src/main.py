@@ -8,7 +8,7 @@ DEFAULT_CFG = "/etc/mattermost-newsfeeds/config.json"
 
 def build_logger(level: str):
     lvl = getattr(logging, level.upper(), logging.DEBUG)
-    logging.basicConfig(level=lvl, format="%(asctime)s %(levelname)s %(message)s")
+    logging.basicConfig(level=lvl, format="%(levelname)s %(message)s")
     return logging.getLogger("mattermost-newsfeeds")
 
 
@@ -18,9 +18,7 @@ def load_sources(cfg, logger, seen, mattermost_api):
     for source_config in cfg.get("sources", []):
         if not source_config.get("enabled", True):
             continue
-        notifier = Notifier(
-            general, source_config.get("notifier", {}), mattermost_api, logger
-        )
+        notifier = Notifier(general, source_config.get("notifier", {}), mattermost_api, logger)
         mod = importlib.import_module(source_config["module"])
         cls = getattr(mod, source_config["class"])
         inst = cls(
