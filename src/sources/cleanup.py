@@ -28,6 +28,7 @@ class CleanUp(SourceBase):
         port = self.mattermost_config.get("port", 80)
         basepath = self.mattermost_config.get("basepath", "/api/v4")
         self.apiInstance = MattermostAPI(url, token, scheme, port, basepath, self.logger)
+        logger.info(f"[cleanup] Cleanup config: {cleanup_config}")
 
     def poll(self, _) -> int:
         for target in self.cleanup_config.get["targets", []]:
