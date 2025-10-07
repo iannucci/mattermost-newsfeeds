@@ -28,14 +28,16 @@ class CleanUp(SourceBase):
         port = self.mattermost_config.get("port", 80)
         basepath = self.mattermost_config.get("basepath", "/api/v4")
         self.apiInstance = MattermostAPI(url, token, scheme, port, basepath, self.logger)
-        logger.info(f"[cleanup] Cleanup config: {cleanup_config}")
 
     def poll(self, _) -> int:
+        self.logger.info(f"[cleanup] Cleanup config: {self.cleanup_config}")
         for target in self.cleanup_config.get["targets", []]:
-            name = target.get["channel", ""]
+            channel = target.get["channel", ""]
             admin_user = target.get["admin_user", ""]
             board = target.get["board", ""]
             threshold_minutes = target.get["threshold_minutes", 60]
-            self.logger.info(f"[cleanup] Cleaning up channel {name}")
+            self.logger.info(f"[cleanup] Cleaning up channel {channel}")
             with MattermostContext(self.apiInstance) as driver:
-                driver.delete_messages_in_channel(admin_user, name, board, threshold_minutes * 60)
+                driver.delete_messages_in_channel(
+                    admin_user, channel, board, threshold_minutes * 60
+                )
